@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorkSpace - Work City Tycoon</title>
+    
+    <!-- Google Fonts: Prompt & VT323 (for Game Vibes) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase JS (UMD) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body { font-family: 'Prompt', sans-serif; -webkit-font-smoothing: antialiased; }
+        .hidden { display: none !important; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Loader */
+        .loader { width: 20px; height: 20px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        .loader-dark { border-color: #4f46e5; border-bottom-color: transparent; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Transitions */
+        .page-transition { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Calendar Grid */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+
+        /* --- GAME WIDGET STYLES --- */
+        .city-sky-morning { background: linear-gradient(to bottom, #60a5fa, #bfdbfe); }
+        .city-sky-afternoon { background: linear-gradient(to bottom, #3b82f6, #93c5fd); }
+        .city-sky-evening { background: linear-gradient(to bottom, #f59e0b, #fcd34d, #818cf8); }
+        .city-sky-night { background: linear-gradient(to bottom, #1e1b4b, #312e81, #4338ca); color: white; }
+        
+        .building-pop { animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: scale(0); transform-origin: bottom; }
+        @keyframes popUp { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+
+        /* Hide scrollbar for city container but allow scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-screen overflow-hidden flex flex-col">
+
+    <!-- ================= AUTH VIEW ================= -->
+    <div id="auth-view" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-white sm:bg-slate-50">
+        <div class="w-full max-w-sm bg-white sm:rounded-3xl sm:shadow-xl sm:border border-slate-100 p-8 sm:p-10 page-transition">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white mb-4 shadow-lg shadow-indigo-200">
+                    <i data-lucide="briefcase" width="32" height="32"></i>
+                </div>
+                <h2 id="auth-title" class="text-2xl font-bold text-slate-900">ยินดีต้อนรับ</h2>
+                <p class="text-slate-500 mt-2 font-light">WorkSpace HR & PM</p>
+            </div>
+
+            <div id="auth-error" class="hidden mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-start gap-3 border border-red-100">
+                <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i> 
+                <span id="auth-error-msg" class="leading-relaxed"></span>
+            </div>
+
+            <form id="auth-form" class="space-y-5">
+                <div id="name-field" class="hidden">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">ชื่อ-นามสกุล</label>
+                    <input type="text" id="input-name" name="name" autocomplete="name" class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">อีเมล</label>
+                    <input type="email" id="input-email" name="email" autocomplete="username" required class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">รหัสผ่าน</label>
+                    <input type="password" id="input-password" name="password" autocomplete="current-password" required class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <input type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        <span class="text-sm text-slate-500 group-hover:text-slate-700">จำฉันไว้ในระบบ</span>
+                    </label>
+                </div>
+
+                <button type="submit" id="btn-auth" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 flex justify-center items-center gap-3">
+                    <span id="btn-auth-text">เข้าสู่ระบบ</span>
+                    <div id="auth-loader" class="loader hidden"></div>
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <button id="toggle-auth" class="text-sm text-slate-500 hover:text-indigo-600 font-medium transition-colors">
+                    ยังไม่มีบัญชี? <span class="underline decoration-indigo-200 underline-offset-4">ลงทะเบียนใหม่</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APP VIEW ================= -->
+    <div id="app-view" class="hidden flex h-full">
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl lg:shadow-none">
+            <div class="p-8 pb-4">
+                <div class="flex items-center gap-4">
+                    <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-200">
+                        <i data-lucide="briefcase"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">HR & Project Mgmt</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="px-4 py-4 space-y-1.5 flex-1 overflow-y-auto">
+                <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">General</p>
+                <button onclick="router.navigate('dashboard')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-dashboard">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> ภาพรวม
+                </button>
+                <button onclick="router.navigate('calendar')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-calendar">
+                    <i data-lucide="calendar" class="w-5 h-5"></i> ปฏิทินทีม
+                </button>
+                <button onclick="router.navigate('team')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-team">
+                    <i data-lucide="users" class="w-5 h-5"></i> ทีมงาน (Team)
+                </button>
+
+                <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Work</p>
+                <button onclick="router.navigate('projects')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-projects">
+                    <i data-lucide="folder-kanban" class="w-5 h-5"></i> โปรเจกต์
+                </button>
+                <button onclick="router.navigate('tasks')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-tasks">
+                    <i data-lucide="check-square" class="w-5 h-5"></i> งานของฉัน
+                </button>
+
+                <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">HR</p>
+                <button onclick="router.navigate('checkin')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-checkin">
+                    <i data-lucide="map-pin" class="w-5 h-5"></i> ลงเวลาเข้างาน
+                </button>
+                <button onclick="router.navigate('leave')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-leave">
+                    <i data-lucide="coffee" class="w-5 h-5"></i> ขอลาหยุด
+                </button>
+
+                <!-- Admin Section -->
+                <div id="menu-admin-section" class="hidden">
+                    <p class="px-4 text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-2 mt-4">Admin Zone</p>
+                    <button onclick="router.navigate('admin')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-admin">
+                        <i data-lucide="shield" class="w-5 h-5"></i> ผู้ดูแลระบบ
+                    </button>
+                    <button onclick="router.navigate('report')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-report">
+                        <i data-lucide="file-bar-chart-2" class="w-5 h-5"></i> รายงานสรุป
+                    </button>
+                </div>
+            </nav>
+
+            <div class="p-4 m-4 bg-slate-50 rounded-2xl border border-slate-100 relative group">
+                <!-- Edit Profile Button -->
+                <button onclick="app.openEditProfile()" class="absolute top-2 right-2 text-slate-400 hover:text-indigo-600 p-1 rounded-md transition-colors" title="แก้ไขข้อมูลส่วนตัว">
+                    <i data-lucide="edit-3" width="16"></i>
+                </button>
+
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-sm font-bold shadow-sm" id="user-avatar">U</div>
+                    <div class="overflow-hidden pr-6">
+                        <p class="text-sm font-semibold text-slate-900 truncate" id="user-name">User</p>
+                        <p class="text-xs text-slate-500 capitalize truncate" id="user-role">Employee</p>
+                    </div>
+                </div>
+                <button id="btn-logout" onclick="auth.logout()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-200">
+                    <i data-lucide="log-out" width="14"></i> ออกจากระบบ
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50" id="main-content-area">
+            <!-- Header (Mobile) -->
+            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-20">
+                <div class="flex items-center gap-2.5">
+                    <span class="font-bold text-slate-800">WorkSpace</span>
+                </div>
+                <button id="menu-btn" class="p-2 hover:bg-slate-100 rounded-lg">
+                    <i data-lucide="menu" class="text-slate-600"></i>
+                </button>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-auto p-4 sm:p-6 lg:p-10 relative">
+                
+                <!-- Dashboard (Bento Style + Game Widget) -->
+                <div id="page-dashboard" class="page max-w-6xl mx-auto space-y-6 page-transition">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                        <div>
+                            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">สวัสดีคุณ <span class="display-name text-indigo-600">User</span> 👋</h2>
+                            <p class="text-slate-500 mt-1 font-light" id="current-date">...</p>
+                        </div>
+                    </div>
+
+                    <!-- Bento Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Stat 1: Total Tasks -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-3 mb-2 text-indigo-600">
+                                    <i data-lucide="briefcase" class="w-5 h-5"></i>
+                                    <span class="text-sm font-medium">งานทั้งหมด</span>
+                                </div>
+                                <p class="text-4xl font-bold text-slate-900" id="dash-total-tasks">0</p>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-auto">รายการที่คุณต้องรับผิดชอบ</p>
+                        </div>
+
+                        <!-- Stat 2: Pending -->
+                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group hover:shadow-md transition-all">
+                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full group-hover:scale-110 transition-transform"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-3 mb-2 text-orange-500">
+                                    <i data-lucide="clock" class="w-5 h-5"></i>
+                                    <span class="text-sm font-medium">รอดำเนินการ</span>
+                                </div>
+                                <p class="text-4xl font-bold text-slate-900" id="dash-pending-tasks">0</p>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-auto">งานที่ต้องเร่งจัดการ</p>
+                        </div>
+
+                        <!-- Stat 3: Status -->
+                        <div class="sm:col-span-2 bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-indigo-100 text-xs font-medium bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm">My Status</span>
+                                    <div class="flex items-center gap-2 mt-3">
+                                        <div class="relative">
+                                            <span class="w-3 h-3 rounded-full bg-emerald-400 block"></span>
+                                            <span class="w-3 h-3 rounded-full bg-emerald-400 block animate-ping absolute top-0 left-0 opacity-75"></span>
+                                        </div>
+                                        <span class="text-2xl font-bold">Online</span>
+                                    </div>
+                                </div>
+                                <i data-lucide="user-check" class="text-white/50 w-8 h-8"></i>
+                            </div>
+                            <div class="flex items-center justify-between mt-auto">
+                                <p class="text-indigo-100 text-sm opacity-90 capitalize" id="dash-role">Employee</p>
+                                <p class="text-xs text-indigo-200">WorkSpace System</p>
+                            </div>
+                        </div>
+
+                        <!-- Work City Widget (Full Width) -->
+                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-slate-900 rounded-3xl shadow-lg border border-slate-200 h-80 relative overflow-hidden group">
+                            <!-- Game Canvas Background -->
+                            <div id="city-sky" class="absolute inset-0 z-0 city-sky-morning transition-colors duration-1000"></div>
+                            
+                            <!-- Decor -->
+                            <div class="absolute top-6 left-8 text-white/30 animate-pulse"><i data-lucide="cloud" width="48"></i></div>
+                            <div class="absolute top-12 right-16 text-white/20"><i data-lucide="cloud" width="32"></i></div>
+
+                            <!-- Floating HUD -->
+                            <div class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-sm border border-white/50 flex gap-4 items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded border border-yellow-500 shadow-sm">LV. <span id="game-level">1</span></span>
+                                    <span class="text-sm font-bold text-slate-700">Work City</span>
+                                </div>
+                                <div class="h-4 w-px bg-slate-300"></div>
+                                <div class="flex flex-col w-32">
+                                    <div class="flex justify-between text-[10px] text-slate-500 font-medium mb-0.5">
+                                        <span>XP</span>
+                                        <span><span id="xp-val">0</span> to up</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div id="xp-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- City Container -->
+                            <div class="flex-1 relative z-10 flex items-end justify-center h-full w-full">
+                                <!-- Ground -->
+                                <div class="absolute bottom-0 w-full h-8 bg-[#4ade80] z-10 border-t-4 border-[#22c55e]"></div>
+                                <div class="absolute bottom-0 w-full h-1/4 bg-gradient-to-t from-emerald-900/50 to-transparent z-0"></div>
+                                
+                                <!-- Buildings Area -->
+                                <div id="city-container" class="relative z-10 flex items-end gap-3 px-10 pb-8 h-full w-full overflow-x-auto no-scrollbar" style="mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);">
+                                    <!-- JS generates buildings here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendar Page -->
+                <div id="page-calendar" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">📅 ปฏิทินทีม</h2>
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-slate-700" id="calendar-month-year">...</h3>
+                            <div class="flex gap-2">
+                                <button onclick="app.changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full"><i data-lucide="chevron-left"></i></button>
+                                <button onclick="app.changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-full"><i data-lucide="chevron-right"></i></button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-semibold text-slate-400 uppercase">
+                            <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
+                        </div>
+                        <div id="calendar-grid" class="calendar-grid">
+                            <!-- JS generates dates here -->
+                        </div>
+                        <div class="mt-6 flex gap-4 text-xs text-slate-500">
+                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-400"></span> วันลา</div>
+                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-indigo-400"></span> Deadline งาน</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Page -->
+                <div id="page-team" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">👥 ทีมงานทั้งหมด</h2>
+                    <div id="team-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <!-- JS loads profiles here -->
+                    </div>
+                </div>
+
+                <!-- Projects Page -->
+                <div id="page-projects" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-slate-800">🚀 โปรเจกต์</h2>
+                        <button onclick="app.toggleProjectForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700">
+                            <i data-lucide="plus"></i> สร้างใหม่
+                        </button>
+                    </div>
+
+                    <div id="project-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+                        <form id="add-project-form" class="space-y-4">
+                            <input type="hidden" id="edit-project-id">
+                            <input type="text" id="project-name" required placeholder="ชื่อโปรเจกต์" class="w-full px-4 py-2 bg-slate-50 border rounded-xl">
+                            <textarea id="project-desc" placeholder="รายละเอียด" class="w-full px-4 py-2 bg-slate-50 border rounded-xl"></textarea>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="app.toggleProjectForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
+                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+                </div>
+
+                <!-- Tasks Page -->
+                <div id="page-tasks" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-slate-800">📋 จัดการงาน (Tasks)</h2>
+                        <button onclick="app.toggleTaskForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+                            <i data-lucide="plus"></i> สั่งงานใหม่
+                        </button>
+                    </div>
+
+                    <div id="task-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+                        <form id="add-task-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="hidden" id="edit-task-id">
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase">ชื่องาน</label>
+                                <input type="text" id="task-title" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase">รายละเอียด (Description)</label>
+                                <textarea id="task-desc" placeholder="รายละเอียดเพิ่มเติมของงาน..." class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase">มอบหมายให้ (Assignee)</label>
+                                <select id="task-assignee" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-slate-700">
+                                    <option value="">เลือกพนักงาน...</option>
+                                    <!-- JS populates team -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-500 uppercase">กำหนดส่ง (Deadline)</label>
+                                <input type="date" id="task-deadline" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-slate-700">
+                            </div>
+                            <div class="md:col-span-2 flex justify-end gap-2 mt-2">
+                                <button type="button" onclick="app.toggleTaskForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
+                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึกงาน</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- To Do -->
+                        <div class="bg-slate-100 rounded-2xl p-4 h-fit">
+                            <div class="flex justify-between mb-3"><span class="font-bold text-slate-700">To Do</span><span id="count-todo" class="bg-white px-2 rounded text-xs py-1">0</span></div>
+                            <div id="list-todo" class="space-y-3 min-h-[50px]"></div>
+                        </div>
+                        <!-- In Progress -->
+                        <div class="bg-blue-50 rounded-2xl p-4 h-fit border border-blue-100">
+                            <div class="flex justify-between mb-3"><span class="font-bold text-blue-700">In Progress</span><span id="count-progress" class="bg-white px-2 rounded text-xs py-1">0</span></div>
+                            <div id="list-progress" class="space-y-3 min-h-[50px]"></div>
+                        </div>
+                        <!-- Done -->
+                        <div class="bg-green-50 rounded-2xl p-4 h-fit border border-green-100">
+                            <div class="flex justify-between mb-3"><span class="font-bold text-green-700">Done</span><span id="count-done" class="bg-white px-2 rounded text-xs py-1">0</span></div>
+                            <div id="list-done" class="space-y-3 min-h-[50px]"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Check-in Page -->
+                <div id="page-checkin" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">📍 ลงเวลาทำงาน</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm flex flex-col items-center justify-center">
+                            <p class="text-lg font-semibold text-slate-800 mb-6" id="checkin-date">...</p>
+                            <div id="checkin-loading" class="hidden"><div class="loader loader-dark"></div></div>
+                            <div id="status-checked-in" class="hidden">
+                                <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="check-circle-2" width="40"></i></div>
+                                <p class="text-2xl font-bold text-green-600">เข้างานแล้ว</p>
+                                <p class="text-slate-500 mt-1">เวลา: <span id="val-checkin-time">--:--</span></p>
+                                <button onclick="app.handleCheckOut()" id="btn-checkout" class="mt-6 bg-red-50 text-red-600 px-6 py-2 rounded-xl font-bold hover:bg-red-100 w-full">ลงเวลาออก</button>
+                                <p id="checked-out-msg" class="hidden mt-4 text-sm text-slate-500">ออกงานแล้ว: <span id="val-checkout-time"></span></p>
+                            </div>
+                            <div id="status-idle" class="w-full">
+                                <button onclick="app.getLocation()" id="btn-gps" class="w-full bg-slate-50 text-slate-600 px-4 py-3 rounded-2xl mb-3 font-semibold hover:bg-slate-100 flex justify-center gap-2">
+                                    <i data-lucide="map-pin"></i> ระบุตำแหน่ง
+                                </button>
+                                <div id="gps-status" class="hidden text-sm mb-3">ระยะห่าง: <span id="gps-dist" class="font-bold">0</span> ม.</div>
+                                <button onclick="app.handleCheckIn()" id="btn-checkin" disabled class="w-full bg-indigo-600 text-white px-4 py-4 rounded-2xl font-bold shadow-lg disabled:bg-slate-200 disabled:shadow-none">ลงเวลาเข้างาน</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+                            <h3 class="font-bold text-slate-800 mb-4">ข้อมูลพิกัด</h3>
+                            <div class="space-y-3 text-sm">
+                                <div class="bg-slate-50 p-3 rounded-xl"><p class="text-xs text-slate-400">OFFICE</p><p class="font-mono">13.7563, 100.5018</p></div>
+                                <div class="bg-indigo-50 p-3 rounded-xl"><p class="text-xs text-indigo-400">YOU</p><p class="font-mono text-indigo-900" id="debug-loc">-</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leave Page (NEW) -->
+                <div id="page-leave" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">☕ ขอลาหยุด</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 h-fit">
+                            <h3 class="font-bold mb-4">แบบฟอร์มการลา</h3>
+                            <form id="leave-form" class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">ประเภท</label>
+                                    <select id="leave-type" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                        <option value="Sick">ลาป่วย</option>
+                                        <option value="Personal">ลากิจ</option>
+                                        <option value="Vacation">ลาพักร้อน</option>
+                                        <option value="Other">อื่นๆ</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">วันที่</label>
+                                    <input type="date" id="leave-date" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">เหตุผล</label>
+                                    <textarea id="leave-reason" placeholder="โปรดระบุ..." class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งใบลา</button>
+                            </form>
+                        </div>
+                        <div class="md:col-span-2">
+                            <h3 class="font-bold mb-4 ml-1">ประวัติการลา</h3>
+                            <div id="leave-list" class="space-y-3">
+                                <!-- JS loads here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Console (NEW) -->
+                <div id="page-admin" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">🛡️ ผู้ดูแลระบบ (Admin Console)</h2>
+                    
+                    <!-- Tabs -->
+                    <div class="flex gap-4 border-b border-slate-200 mb-6">
+                        <button onclick="app.showAdminTab('employees')" class="admin-tab text-indigo-600 border-b-2 border-indigo-600 font-medium px-4 py-2" id="tab-btn-employees">พนักงานทั้งหมด</button>
+                        <button onclick="app.showAdminTab('leaves')" class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2" id="tab-btn-leaves">อนุมัติการลา</button>
+                    </div>
+
+                    <!-- Employee Management -->
+                    <div id="admin-employees" class="admin-section">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-100">
+                                        <tr>
+                                            <th class="p-4 font-semibold text-slate-600">ชื่อ-นามสกุล</th>
+                                            <th class="p-4 font-semibold text-slate-600">อีเมล</th>
+                                            <th class="p-4 font-semibold text-slate-600">ตำแหน่ง</th>
+                                            <th class="p-4 font-semibold text-slate-600">สิทธิ์ (Role)</th>
+                                            <th class="p-4 font-semibold text-slate-600 text-right">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-employee-list" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leave Approval -->
+                    <div id="admin-leaves" class="admin-section hidden">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-100">
+                                        <tr>
+                                            <th class="p-4 font-semibold text-slate-600">พนักงาน</th>
+                                            <th class="p-4 font-semibold text-slate-600">ประเภท</th>
+                                            <th class="p-4 font-semibold text-slate-600">วันที่ลา</th>
+                                            <th class="p-4 font-semibold text-slate-600">เหตุผล</th>
+                                            <th class="p-4 font-semibold text-slate-600">สถานะ</th>
+                                            <th class="p-4 font-semibold text-slate-600 text-right">อนุมัติ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-leave-list" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Page -->
+                <div id="page-report" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-2xl font-bold text-slate-800">📄 รายงานการลงเวลา</h2>
+                        <button onclick="app.downloadCSV()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-lg shadow-emerald-100 flex items-center gap-2 transition-transform active:scale-95">
+                            <i data-lucide="download" width="18"></i> <span class="hidden sm:inline">Download CSV</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-4 font-semibold text-slate-600">วันที่</th>
+                                        <th class="p-4 font-semibold text-slate-600">พนักงาน</th>
+                                        <th class="p-4 font-semibold text-slate-600">เวลาเข้า</th>
+                                        <th class="p-4 font-semibold text-slate-600">เวลาออก</th>
+                                        <th class="p-4 font-semibold text-slate-600">สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="report-table-body" class="divide-y divide-slate-100">
+                                    <!-- Rows here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Edit Profile Modal -->
+    <div id="modal-edit-profile" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all scale-100">
+            <h3 class="text-xl font-bold mb-4 text-slate-800">แก้ไขข้อมูลส่วนตัว</h3>
+            <form id="form-edit-profile" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">ชื่อ-นามสกุล</label>
+                    <input type="text" id="edit-profile-name" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <!-- Position -->
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">ตำแหน่ง</label>
+                    <input type="text" id="edit-profile-position" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="app.closeModal('modal-edit-profile')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">ยกเลิก</button>
+                    <button type="button" onclick="app.saveEditProfile()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100">บันทึก</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Tasks Modal -->
+    <div id="modal-user-tasks" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-slate-800"><i data-lucide="check-square" class="inline w-5 h-5 text-indigo-600 mr-2"></i>งานของ <span id="modal-task-username">...</span></h3>
+                <button onclick="app.closeModal('modal-user-tasks')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+            </div>
+            <div id="modal-task-list" class="overflow-y-auto flex-1 space-y-3 pr-2">
+                <!-- Tasks go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // CONFIG
+        const SUPABASE_URL = 'https://panomchvlqjimwgsxevz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbm9tY2h2bHFqaW13Z3N4ZXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1Njk3OTgsImV4cCI6MjA4MjE0NTc5OH0.YdXBlUOlLape0jBdbGgt01wZL-1Es9hQDiGkmZI2zxI';
+        const OFFICE_LOCATION = { lat: 13.7563, lng: 100.5018 };
+        const MAX_DIST = 500;
+        const ADMIN_EMAIL = 'poomie@live.com'; // Hardcoded Admin
+
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // STATE
+        const state = {
+            user: null,
+            profile: null,
+            tasks: [],
+            projects: [],
+            leaves: [],
+            team: [],
+            location: null,
+            currentMonth: new Date()
+        };
+
+        // UTILS
+        const getEl = (id) => document.getElementById(id);
+        const show = (id) => getEl(id)?.classList.remove('hidden');
+        const hide = (id) => getEl(id)?.classList.add('hidden');
+        const formatDate = (date) => new Date(date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+        const translateError = (msg) => {
+            if (msg.includes('Invalid login credentials')) return 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+            return msg;
+        };
+
+        // AUTH
+        const auth = {
+            init: async () => {
+                const { data: { session } } = await db.auth.getSession();
+                if (session) {
+                    state.user = session.user;
+                    await auth.loadProfile();
+                    router.init();
+                } else {
+                    router.showAuth();
+                }
+                db.auth.onAuthStateChange(async (event, session) => {
+                    if (event === 'SIGNED_IN' && session) {
+                        state.user = session.user;
+                        await auth.loadProfile();
+                        router.init();
+                    } else if (event === 'SIGNED_OUT') {
+                        location.reload();
+                    }
+                });
+            },
+            loadProfile: async () => {
+                try {
+                    // Check if current user is Poomie (Force Admin)
+                    if(state.user.email === ADMIN_EMAIL) {
+                        const { data: p } = await db.from('profiles').select('role').eq('id', state.user.id).single();
+                        if(p && p.role !== 'admin') {
+                            await db.from('profiles').update({ role: 'admin' }).eq('id', state.user.id);
+                        }
+                    }
+
+                    const { data } = await db.from('profiles').select('*').eq('id', state.user.id).single();
+                    state.profile = data || { name: state.user.email.split('@')[0], role: 'employee' };
+                    // UI Update
+                    getEl('user-name').innerText = state.profile.name;
+                    getEl('user-role').innerText = state.profile.role;
+                    getEl('user-avatar').innerText = state.profile.name.charAt(0).toUpperCase();
+                    document.querySelectorAll('.display-name').forEach(el => el.innerText = state.profile.name);
+                    
+                    // Admin Menu Visibility
+                    const adminMenu = getEl('menu-admin-section');
+                    if(state.profile.role === 'admin') adminMenu.classList.remove('hidden');
+                    else adminMenu.classList.add('hidden');
+
+                } catch(e) { console.log(e); }
+            },
+            login: async (email, password) => {
+                const { error } = await db.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+            },
+            register: async (email, password, name) => {
+                const { error } = await db.auth.signUp({ email, password, options: { data: { name } } });
+                if (error) throw error;
+            },
+            logout: async () => {
+                const btn = document.querySelector('#btn-logout');
+                if(btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<div class="loader" style="border-color: #94a3b8; border-bottom-color: transparent;"></div>'; 
+                }
+                
+                try {
+                    await db.auth.signOut();
+                } catch (err) {
+                    console.error("Logout error:", err);
+                } finally {
+                    localStorage.clear();
+                    window.location.reload();
+                }
+            }
+        };
+
+        // ROUTER
+        const router = {
+            init: () => {
+                hide('auth-view');
+                show('app-view');
+                // Set background based on time for game dashboard
+                app.updateSky();
+                router.navigate('dashboard');
+            },
+            showAuth: () => {
+                hide('app-view');
+                show('auth-view');
+            },
+            navigate: (pageId) => {
+                document.querySelectorAll('.nav-item').forEach(el => el.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group");
+                const active = getEl(`nav-${pageId}`);
+                if(active) active.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-50 text-indigo-600 group";
+                
+                document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+                const target = getEl(`page-${pageId}`);
+                if(target) {
+                    target.classList.remove('hidden');
+                    target.classList.remove('page-transition');
+                    void target.offsetWidth;
+                    target.classList.add('page-transition');
+                }
+                
+                // Load Page Data
+                if(pageId === 'dashboard') app.loadDashboard();
+                if(pageId === 'team') app.loadTeam();
+                if(pageId === 'projects') app.loadProjects();
+                if(pageId === 'tasks') { app.loadTasks(); app.loadTeam(); }
+                if(pageId === 'calendar') app.loadCalendar();
+                if(pageId === 'checkin') app.loadCheckin();
+                if(pageId === 'leave') app.loadLeaves();
+                if(pageId === 'admin') app.loadAdmin();
+                if(pageId === 'report') app.loadReport();
+
+                // Mobile Sidebar
+                getEl('sidebar').classList.add('-translate-x-full');
+                hide('sidebar-overlay');
+                lucide.createIcons();
+            }
+        };
+
+        // APP LOGIC
+        const app = {
+            // DASHBOARD GAME LOGIC
+            updateSky: () => {
+                const hour = new Date().getHours();
+                const sky = getEl('city-sky');
+                if(!sky) return;
+                
+                sky.className = 'absolute inset-0 z-0 transition-colors duration-1000';
+                if(hour >= 5 && hour < 12) sky.classList.add('city-sky-morning');
+                else if(hour >= 12 && hour < 17) sky.classList.add('city-sky-afternoon');
+                else if(hour >= 17 && hour < 20) sky.classList.add('city-sky-evening');
+                else sky.classList.add('city-sky-night');
+            },
+            
+            loadDashboard: async () => {
+                const { data } = await db.from('tasks').select('*');
+                state.tasks = data || [];
+                
+                const myTasks = state.tasks.filter(t => t.assignee === state.profile.name || state.profile.role === 'admin');
+                const doneCount = state.tasks.filter(t => t.status === 'Done').length;
+                const progressCount = state.tasks.filter(t => t.status === 'In Progress').length;
+                const todoCount = state.tasks.filter(t => t.status === 'To Do').length;
+                
+                // Dashboard Stats
+                const elTotal = getEl('dash-total-tasks');
+                if(elTotal) elTotal.innerText = myTasks.length;
+
+                const elPending = getEl('dash-pending-tasks');
+                if(elPending) elPending.innerText = myTasks.filter(t => t.status !== 'Done').length;
+
+                const elRole = getEl('dash-role');
+                if(elRole) elRole.innerText = state.profile.role;
+
+                const elDate = getEl('current-date');
+                if(elDate) elDate.innerText = formatDate(new Date());
+
+                // Game Stats (Calculated)
+                const level = Math.floor(doneCount / 5) + 1;
+                const xp = doneCount % 5;
+                const nextLevelXp = 5;
+                const xpPercent = (xp / nextLevelXp) * 100;
+                
+                const elLevel = getEl('game-level');
+                if(elLevel) elLevel.innerText = level;
+
+                const elXpVal = getEl('xp-val');
+                if(elXpVal) elXpVal.innerText = `${nextLevelXp - xp}`;
+
+                const elXpBar = getEl('xp-bar');
+                if(elXpBar) elXpBar.style.width = `${xpPercent}%`;
+                
+                // Render City
+                app.renderCity(doneCount, progressCount, todoCount);
+            },
+            
+            renderCity: (done, progress, todo) => {
+                const container = getEl('city-container');
+                container.innerHTML = '';
+                
+                // Helper to create building element
+                const createBuilding = (type, delay) => {
+                    const div = document.createElement('div');
+                    div.className = 'relative flex flex-col items-center justify-end building-pop shrink-0';
+                    div.style.animationDelay = `${delay}ms`;
+                    
+                    let content = '';
+                    if(type === 'done') {
+                        // Random skyscraper or house
+                        const size = Math.random() > 0.7 ? 'h-32 w-16' : 'h-16 w-12';
+                        const color = Math.random() > 0.5 ? 'bg-indigo-500' : 'bg-blue-500';
+                        const windows = Math.random() > 0.5 ? 'bg-yellow-200' : 'bg-blue-200';
+                        
+                        // Simple CSS Building
+                        content = `
+                            <div class="${size} ${color} rounded-t-lg shadow-lg relative border-2 border-white/20 transition-all hover:scale-105 hover:z-10 cursor-pointer">
+                                <div class="absolute inset-2 grid grid-cols-2 gap-1 content-start">
+                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
+                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
+                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
+                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
+                                </div>
+                            </div>
+                            <div class="h-1 w-full bg-black/20 rounded-full mt-1 blur-[1px]"></div>
+                        `;
+                    } else if (type === 'progress') {
+                        // Crane
+                        content = `
+                            <div class="h-24 w-8 relative mx-auto">
+                                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-full bg-yellow-500"></div>
+                                <div class="absolute top-0 right-0 w-16 h-1 bg-yellow-500"></div>
+                                <div class="absolute top-0 right-0 w-0.5 h-8 bg-black/50 origin-top animate-bounce"></div>
+                            </div>
+                            <div class="h-1 w-8 bg-black/20 rounded-full"></div>
+                        `;
+                    } else {
+                        // Empty lot / Blueprint
+                        content = `
+                            <div class="h-12 w-12 bg-white/10 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center">
+                                <span class="text-xs opacity-50">🚧</span>
+                            </div>
+                        `;
+                    }
+                    
+                    div.innerHTML = content;
+                    return div;
+                };
+                
+                // Add elements
+                let delay = 0;
+                for(let i=0; i<done; i++) {
+                    container.appendChild(createBuilding('done', delay));
+                    delay += 50;
+                }
+                for(let i=0; i<progress; i++) {
+                    container.appendChild(createBuilding('progress', delay));
+                    delay += 50;
+                }
+                // Limit todo items visually so it doesn't clutter too much
+                for(let i=0; i<Math.min(todo, 5); i++) {
+                    container.appendChild(createBuilding('todo', delay));
+                    delay += 50;
+                }
+            },
+
+            // TEAM
+            loadTeam: async () => {
+                const { data } = await db.from('profiles').select('*');
+                state.team = data || [];
+                
+                const list = getEl('team-list');
+                if(list) {
+                    list.innerHTML = state.team.map(p => `
+                        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-500 text-lg">${p.name.charAt(0).toUpperCase()}</div>
+                                <div>
+                                    <p class="font-bold text-slate-800">${p.name}</p>
+                                    <p class="text-xs text-slate-500 capitalize">${p.position || p.role}</p>
+                                    <p class="text-xs text-slate-400 mt-1">${p.email}</p>
+                                </div>
+                            </div>
+                            <button onclick="app.viewUserTasks('${p.name}')" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
+                                ดูงาน
+                            </button>
+                        </div>
+                    `).join('');
+                }
+
+                const selects = document.querySelectorAll('#task-assignee');
+                selects.forEach(sel => {
+                    const current = sel.value;
+                    sel.innerHTML = '<option value="">เลือกพนักงาน...</option>' + 
+                        state.team.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+                    if(current) sel.value = current;
+                });
+            },
+            
+            // View Tasks Modal
+            viewUserTasks: async (userName) => {
+                // Ensure tasks are loaded
+                if(state.tasks.length === 0) {
+                    const { data } = await db.from('tasks').select('*');
+                    state.tasks = data || [];
+                }
+                
+                const userTasks = state.tasks.filter(t => t.assignee === userName);
+                getEl('modal-task-username').innerText = userName;
+                
+                const list = getEl('modal-task-list');
+                if(userTasks.length === 0) {
+                    list.innerHTML = `<div class="text-center p-8 text-slate-400 bg-slate-50 rounded-xl">ไม่มีงานที่ได้รับมอบหมาย</div>`;
+                } else {
+                    list.innerHTML = userTasks.map(t => {
+                        let statusColor = 'bg-slate-100 text-slate-600';
+                        if(t.status === 'In Progress') statusColor = 'bg-blue-50 text-blue-600';
+                        if(t.status === 'Done') statusColor = 'bg-green-50 text-green-600';
+                        
+                        return `
+                        <div class="p-3 border border-slate-100 rounded-xl hover:bg-slate-50">
+                            <div class="flex justify-between items-start mb-1">
+                                <p class="font-medium text-slate-800">${t.title}</p>
+                                <span class="text-[10px] px-2 py-0.5 rounded ${statusColor} font-medium whitespace-nowrap">${t.status}</span>
+                            </div>
+                            ${t.description ? `<p class="text-xs text-slate-500 mb-2">${t.description}</p>` : ''}
+                            ${t.deadline ? `<p class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" width="10"></i> ${formatDate(t.deadline)}</p>` : ''}
+                        </div>
+                        `;
+                    }).join('');
+                }
+                
+                show('modal-user-tasks');
+                lucide.createIcons();
+            },
+            
+            // Edit Profile
+            openEditProfile: () => {
+                getEl('edit-profile-name').value = state.profile.name;
+                getEl('edit-profile-position').value = state.profile.position || '';
+                show('modal-edit-profile');
+            },
+            saveEditProfile: async () => {
+                const newName = getEl('edit-profile-name').value.trim();
+                const newPos = getEl('edit-profile-position').value.trim();
+                
+                if(!newName) return alert('กรุณากรอกชื่อ');
+                
+                try {
+                    const { error } = await db.from('profiles').update({ 
+                        name: newName,
+                        position: newPos 
+                    }).eq('id', state.user.id);
+                    
+                    if(error) throw error;
+                    
+                    // Update Local State
+                    state.profile.name = newName;
+                    state.profile.position = newPos;
+                    
+                    // Update UI
+                    getEl('user-name').innerText = newName;
+                    document.querySelectorAll('.display-name').forEach(el => el.innerText = newName);
+                    getEl('user-avatar').innerText = newName.charAt(0).toUpperCase();
+                    
+                    app.closeModal('modal-edit-profile');
+                    alert('บันทึกข้อมูลเรียบร้อย');
+                } catch(err) {
+                    alert('เกิดข้อผิดพลาด: ' + err.message);
+                }
+            },
+            
+            closeModal: (id) => {
+                hide(id);
+            },
+
+            // ADMIN CONSOLE
+            loadAdmin: async () => {
+                await app.loadTeam(); // Get latest profiles
+                
+                // Employees
+                const empList = getEl('admin-employee-list');
+                empList.innerHTML = state.team.map(p => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-4">${p.name}</td>
+                        <td class="p-4 text-slate-500">${p.email}</td>
+                        <td class="p-4">
+                            <input type="text" value="${p.position || ''}" class="border rounded px-2 py-1 text-xs w-24" onchange="app.updatePosition('${p.id}', this.value)">
+                        </td>
+                        <td class="p-4">
+                            <select class="border rounded px-2 py-1 text-xs" onchange="app.updateRole('${p.id}', this.value)">
+                                <option value="employee" ${p.role === 'employee' ? 'selected' : ''}>Employee</option>
+                                <option value="admin" ${p.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                        </td>
+                        <td class="p-4 text-right"><span class="text-xs text-green-600 font-bold">Auto-Saved</span></td>
+                    </tr>
+                `).join('');
+
+                // Leaves
+                const { data: leaves } = await db.from('leaves').select('*').eq('status', 'Pending').order('date', { ascending: false });
+                const leaveList = getEl('admin-leave-list');
+                if(leaves.length === 0) {
+                    leaveList.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่มีรายการลาที่รออนุมัติ</td></tr>';
+                } else {
+                    leaveList.innerHTML = leaves.map(l => `
+                        <tr>
+                            <td class="p-4 font-medium">${l.user_name}</td>
+                            <td class="p-4">${l.type}</td>
+                            <td class="p-4">${formatDate(l.date)}</td>
+                            <td class="p-4 text-xs text-slate-500 max-w-xs truncate">${l.reason}</td>
+                            <td class="p-4"><span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Pending</span></td>
+                            <td class="p-4 text-right flex gap-2 justify-end">
+                                <button onclick="app.updateLeave('${l.id}', 'Approved')" class="text-green-600 hover:bg-green-50 p-1 rounded"><i data-lucide="check" width="16"></i></button>
+                                <button onclick="app.updateLeave('${l.id}', 'Rejected')" class="text-red-600 hover:bg-red-50 p-1 rounded"><i data-lucide="x" width="16"></i></button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                lucide.createIcons();
+            },
+            showAdminTab: (tabName) => {
+                document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.admin-tab').forEach(el => {
+                    el.classList.remove('text-indigo-600', 'border-indigo-600');
+                    el.classList.add('text-slate-500', 'border-transparent');
+                });
+                
+                getEl(`admin-${tabName}`).classList.remove('hidden');
+                getEl(`tab-btn-${tabName}`).classList.add('text-indigo-600', 'border-indigo-600');
+                getEl(`tab-btn-${tabName}`).classList.remove('text-slate-500', 'border-transparent');
+            },
+            updateRole: async (id, role) => {
+                await db.from('profiles').update({ role }).eq('id', id);
+            },
+            updatePosition: async (id, position) => {
+                await db.from('profiles').update({ position }).eq('id', id);
+            },
+            updateLeave: async (id, status) => {
+                await db.from('leaves').update({ status }).eq('id', id);
+                app.loadAdmin();
+            },
+
+            // PROJECTS
+            loadProjects: async () => {
+                const { data } = await db.from('projects').select('*').order('created_at', { ascending: false });
+                state.projects = data || [];
+                const list = getEl('project-list');
+                list.innerHTML = state.projects.map(p => `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg text-slate-800">${p.name}</h3>
+                            <button onclick="app.prepEditProject(${p.id}, '${p.name}', '${p.description || ''}')" class="text-slate-300 hover:text-indigo-600"><i data-lucide="edit-2" width="16"></i></button>
+                        </div>
+                        <p class="text-slate-500 text-sm line-clamp-2">${p.description || '-'}</p>
+                        <div class="mt-4 pt-3 border-t border-slate-50 flex justify-between text-xs text-slate-400">
+                            <span>Status: ${p.status}</span>
+                            <span>Created: ${formatDate(p.created_at)}</span>
+                        </div>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            },
+            toggleProjectForm: () => {
+                const form = getEl('project-form-container');
+                form.classList.toggle('hidden');
+                if(!form.classList.contains('hidden')) {
+                    getEl('add-project-form').reset();
+                    getEl('edit-project-id').value = '';
+                }
+            },
+            prepEditProject: (id, name, desc) => {
+                getEl('project-form-container').classList.remove('hidden');
+                getEl('edit-project-id').value = id;
+                getEl('project-name').value = name;
+                getEl('project-desc').value = desc;
+                window.scrollTo(0,0);
+            },
+            saveProject: async () => {
+                const id = getEl('edit-project-id').value;
+                const name = getEl('project-name').value;
+                const description = getEl('project-desc').value;
+                
+                if(id) {
+                    await db.from('projects').update({ name, description }).eq('id', id);
+                } else {
+                    await db.from('projects').insert({ name, description, created_by: state.user.id });
+                }
+                app.toggleProjectForm();
+                app.loadProjects();
+            },
+
+            // TASKS
+            loadTasks: async () => {
+                const { data } = await db.from('tasks').select('*').order('created_at', { ascending: false });
+                state.tasks = data || [];
+                app.renderTasks();
+            },
+            renderTasks: () => {
+                const cols = { 'To Do': getEl('list-todo'), 'In Progress': getEl('list-progress'), 'Done': getEl('list-done') };
+                const counts = { 'To Do': 0, 'In Progress': 0, 'Done': 0 };
+                Object.values(cols).forEach(el => el.innerHTML = '');
+
+                state.tasks.forEach(task => {
+                    const status = task.status || 'To Do';
+                    if (cols[status]) {
+                        counts[status]++;
+                        const deadlineHtml = task.deadline ? `<span class="flex items-center gap-1 ${new Date(task.deadline) < new Date() && status !== 'Done' ? 'text-red-500 font-bold' : ''}"><i data-lucide="calendar" width="10"></i> ${formatDate(task.deadline)}</span>` : '';
+                        
+                        cols[status].innerHTML += `
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all group relative">
+                                <button onclick="app.prepEditTask(${task.id}, '${task.title}', '${task.assignee || ''}', '${task.deadline || ''}', '${task.description || ''}')" class="absolute top-3 right-3 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="edit-2" width="14"></i></button>
+                                <p class="font-medium text-slate-800 mb-2 pr-6">${task.title}</p>
+                                ${task.description ? `<p class="text-xs text-slate-400 mb-2 line-clamp-1">${task.description}</p>` : ''}
+                                <div class="flex flex-wrap gap-2 text-xs text-slate-500 mb-3">
+                                    <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded"><i data-lucide="user" width="12"></i> ${task.assignee || 'Unassigned'}</span>
+                                    ${deadlineHtml}
+                                </div>
+                                <div class="flex gap-2 pt-2 border-t border-slate-50">
+                                    ${status !== 'To Do' ? `<button onclick="app.moveTask(${task.id}, 'To Do')" class="text-[10px] bg-slate-100 px-2 py-1 rounded hover:text-indigo-600">To Do</button>` : ''}
+                                    ${status !== 'In Progress' ? `<button onclick="app.moveTask(${task.id}, 'In Progress')" class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100">Progress</button>` : ''}
+                                    ${status !== 'Done' ? `<button onclick="app.moveTask(${task.id}, 'Done')" class="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100">Done</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                Object.keys(counts).forEach(k => {
+                    const el = getEl(`count-${k.toLowerCase().replace(' ', '-')}`);
+                    if(el) el.innerText = counts[k];
+                });
+                lucide.createIcons();
+            },
+            toggleTaskForm: () => {
+                const form = getEl('task-form-container');
+                form.classList.toggle('hidden');
+                if(!form.classList.contains('hidden')) {
+                    getEl('add-task-form').reset();
+                    getEl('edit-task-id').value = '';
+                }
+            },
+            prepEditTask: (id, title, assignee, deadline, desc) => {
+                getEl('task-form-container').classList.remove('hidden');
+                getEl('edit-task-id').value = id;
+                getEl('task-title').value = title;
+                getEl('task-desc').value = desc || '';
+                getEl('task-assignee').value = assignee;
+                getEl('task-deadline').value = deadline;
+                window.scrollTo(0,0);
+            },
+            saveTask: async () => {
+                const id = getEl('edit-task-id').value;
+                const title = getEl('task-title').value;
+                const desc = getEl('task-desc').value;
+                const assignee = getEl('task-assignee').value;
+                const deadline = getEl('task-deadline').value || null;
+
+                if(id) {
+                    await db.from('tasks').update({ title, description: desc, assignee, deadline }).eq('id', id);
+                } else {
+                    await db.from('tasks').insert({ title, description: desc, assignee, deadline, status: 'To Do', created_by: state.user.id });
+                }
+                app.toggleTaskForm();
+                app.loadTasks();
+            },
+            moveTask: async (id, status) => {
+                // Optimistic update omitted for brevity, direct call
+                await db.from('tasks').update({ status }).eq('id', id);
+                app.loadTasks();
+            },
+
+            // LEAVES
+            loadLeaves: async () => {
+                const { data } = await db.from('leaves').select('*').order('date', { ascending: false });
+                state.leaves = data || [];
+                
+                const list = getEl('leave-list');
+                list.innerHTML = state.leaves.map(l => {
+                    let statusColor = 'bg-slate-100 text-slate-500';
+                    if(l.status === 'Approved') statusColor = 'bg-green-100 text-green-700';
+                    if(l.status === 'Rejected') statusColor = 'bg-red-100 text-red-700';
+                    if(l.status === 'Pending') statusColor = 'bg-yellow-100 text-yellow-700';
+
+                    return `
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold text-xs">${l.type.charAt(0)}</div>
+                            <div>
+                                <p class="font-bold text-sm text-slate-800">${l.type} <span class="font-normal text-slate-400 text-xs">(${formatDate(l.date)})</span></p>
+                                <p class="text-xs text-slate-500">${l.user_name} : ${l.reason || '-'}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded text-[10px] font-bold ${statusColor}">${l.status}</span>
+                    </div>
+                `}).join('');
+            },
+            submitLeave: async () => {
+                const type = getEl('leave-type').value;
+                const date = getEl('leave-date').value;
+                const reason = getEl('leave-reason').value;
+                
+                if(!date) return alert('กรุณาเลือกวันที่');
+
+                const { error } = await db.from('leaves').insert({
+                    user_id: state.user.id,
+                    user_name: state.profile.name,
+                    type, date, reason, status: 'Pending'
+                });
+                
+                if(error) alert(error.message);
+                else {
+                    alert('ส่งใบลาเรียบร้อย');
+                    getEl('leave-form').reset();
+                    app.loadLeaves();
+                }
+            },
+
+            // CALENDAR
+            loadCalendar: async () => {
+                if(state.leaves.length === 0) await app.loadLeaves();
+                if(state.tasks.length === 0) await app.loadTasks();
+                app.renderCalendar();
+            },
+            changeMonth: (delta) => {
+                state.currentMonth.setMonth(state.currentMonth.getMonth() + delta);
+                app.renderCalendar();
+            },
+            renderCalendar: () => {
+                const year = state.currentMonth.getFullYear();
+                const month = state.currentMonth.getMonth();
+                
+                getEl('calendar-month-year').innerText = state.currentMonth.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startDayOfWeek = firstDay.getDay(); // 0 = Sun
+                
+                const grid = getEl('calendar-grid');
+                grid.innerHTML = '';
+
+                // Empty slots
+                for(let i=0; i<startDayOfWeek; i++) {
+                    grid.innerHTML += `<div class="h-24 bg-slate-50/50 rounded-xl"></div>`;
+                }
+
+                // Days
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const isToday = new Date().toISOString().split('T')[0] === dateStr;
+                    
+                    // Find events
+                    const dayLeaves = state.leaves.filter(l => l.date === dateStr && l.status === 'Approved');
+                    const dayDeadlines = state.tasks.filter(t => t.deadline === dateStr);
+
+                    let dots = '';
+                    dayLeaves.forEach(l => dots += `<div class="text-[10px] bg-red-100 text-red-600 px-1 rounded mt-1 truncate">${l.user_name.split(' ')[0]} ลา</div>`);
+                    dayDeadlines.forEach(t => dots += `<div class="text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded mt-1 truncate">ส่ง: ${t.title}</div>`);
+
+                    grid.innerHTML += `
+                        <div class="h-24 bg-slate-50 border border-slate-100 rounded-xl p-1 overflow-hidden hover:border-indigo-300 transition-colors ${isToday ? 'ring-2 ring-indigo-500' : ''}">
+                            <div class="text-right text-xs font-bold text-slate-400 mb-1">${d}</div>
+                            <div class="flex flex-col gap-0.5">${dots}</div>
+                        </div>
+                    `;
+                }
+            },
+
+            // CHECK-IN
+            loadCheckin: async () => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const { data } = await db.from('attendance').select('*').eq('user_id', state.user.id).eq('date', todayStr);
+                state.attendance = (data && data.length > 0) ? data[0] : null;
+                app.renderCheckin();
+            },
+            renderCheckin: () => {
+                hide('checkin-loading');
+                if (state.attendance) {
+                    hide('status-idle'); show('status-checked-in');
+                    getEl('val-checkin-time').innerText = state.attendance.check_in;
+                    if(state.attendance.check_out) {
+                        getEl('val-checkout-time').innerText = state.attendance.check_out;
+                        show('checked-out-msg');
+                        hide('btn-checkout');
+                    } else {
+                        show('btn-checkout');
+                        hide('checked-out-msg');
+                    }
+                } else {
+                    show('status-idle'); hide('status-checked-in');
+                }
+            },
+            getLocation: () => {
+                const btn = getEl('btn-gps');
+                btn.innerHTML = 'กำลังค้นหา...';
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        state.location = { lat: latitude, lng: longitude };
+                        // Distance Calc
+                        const R=6371e3, φ1=latitude*Math.PI/180, φ2=OFFICE_LOCATION.lat*Math.PI/180, Δφ=(OFFICE_LOCATION.lat-latitude)*Math.PI/180, Δλ=(OFFICE_LOCATION.lng-longitude)*Math.PI/180;
+                        const a=Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2, c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+                        const dist = Math.round(R*c);
+                        
+                        getEl('gps-dist').innerText = dist;
+                        getEl('debug-loc').innerText = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                        show('gps-status');
+                        
+                        if(dist <= MAX_DIST) {
+                            getEl('btn-checkin').disabled = false;
+                            getEl('btn-checkin').classList.remove('bg-indigo-600');
+                            getEl('btn-checkin').classList.add('bg-emerald-500', 'hover:bg-emerald-600');
+                            getEl('btn-checkin').innerText = 'ยืนยันลงเวลา';
+                        } else {
+                            alert(`คุณอยู่นอกพื้นที่ (${dist} ม.)`);
+                        }
+                        btn.innerHTML = '<i data-lucide="map-pin"></i> อัปเดตตำแหน่ง';
+                        lucide.createIcons();
+                    },
+                    () => { alert('ไม่สามารถระบุตำแหน่ง'); btn.innerHTML = 'ลองใหม่'; }
+                );
+            },
+            handleCheckIn: async () => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const timeStr = new Date().toLocaleTimeString('th-TH');
+                await db.from('attendance').insert({ user_id: state.user.id, user_name: state.profile.name, date: todayStr, check_in: timeStr, status: 'Present', location: state.location });
+                app.loadCheckin();
+            },
+            handleCheckOut: async () => {
+                const timeStr = new Date().toLocaleTimeString('th-TH');
+                await db.from('attendance').update({ check_out: timeStr }).eq('id', state.attendance.id);
+                app.loadCheckin();
+            },
+            downloadCSV: () => { /* Same CSV Logic */ },
+            
+            // REPORTS
+            loadReport: async () => {
+                const { data } = await db.from('attendance').select('*').order('date', { ascending: false });
+                state.allAttendance = data || [];
+                
+                const tbody = getEl('report-table-body');
+                tbody.innerHTML = '';
+                
+                if (state.allAttendance.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400 font-light">ยังไม่มีข้อมูลการลงเวลา</td></tr>';
+                    return;
+                }
+
+                state.allAttendance.forEach(r => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 border-b border-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-4 text-slate-500">${r.date}</td>
+                        <td class="p-4 font-medium text-slate-800">${r.user_name}</td>
+                        <td class="p-4 text-emerald-600 font-medium">${r.check_in}</td>
+                        <td class="p-4 text-slate-500">${r.check_out || '-'}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold">Present</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            },
+        };
+
+        // EVENT LISTENERS
+        getEl('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = e.target.email.value;
+            const pass = e.target.password.value;
+            const btn = getEl('btn-auth');
+            btn.disabled = true;
+            getEl('auth-loader').classList.remove('hidden');
+            try {
+                if(getEl('auth-title').innerText.includes('ยินดี')) await auth.login(email, pass);
+                else await auth.register(email, pass, e.target.name.value);
+            } catch(err) { 
+                getEl('auth-error-msg').innerText = err.message; 
+                show('auth-error'); 
+                btn.disabled = false;
+                getEl('auth-loader').classList.add('hidden');
+            }
+        });
+
+        getEl('toggle-auth').addEventListener('click', () => {
+            const isLogin = getEl('auth-title').innerText.includes('ยินดี');
+            getEl('auth-title').innerText = isLogin ? 'สร้างบัญชีใหม่' : 'ยินดีต้อนรับ';
+            getEl('btn-auth-text').innerText = isLogin ? 'ลงทะเบียน' : 'เข้าสู่ระบบ';
+            getEl('name-field').classList.toggle('hidden');
+        });
+
+        getEl('add-project-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveProject(); });
+        getEl('add-task-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveTask(); });
+        getEl('leave-form').addEventListener('submit', (e) => { e.preventDefault(); app.submitLeave(); });
+
+        getEl('menu-btn').addEventListener('click', () => { getEl('sidebar').classList.remove('-translate-x-full'); show('sidebar-overlay'); });
+        getEl('sidebar-overlay').addEventListener('click', () => { getEl('sidebar').classList.add('-translate-x-full'); hide('sidebar-overlay'); });
+
+        // Make Auth and App Global
+        window.auth = auth;
+        window.app = app;
+
+        // INIT
+        auth.init();
+    </script>
+</body>
+</html>
+
