@@ -1118,9 +1118,16 @@
                                     <p class="text-xs text-slate-400 mt-1">${p.email}</p>
                                 </div>
                             </div>
-                            <button onclick="app.viewUserTasks('${p.name}')" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
-                                ดูงาน
-                            </button>
+                            <div class="flex gap-2">
+                                ${state.profile.role === 'admin' ? `
+                                    <button onclick="app.deleteEmployee('${p.id}')" class="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors font-medium">
+                                        ลบ
+                                    </button>
+                                ` : ''}
+                                <button onclick="app.viewUserTasks('${p.name}')" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
+                                    ดูงาน
+                                </button>
+                            </div>
                         </div>
                     `).join('');
                 }
@@ -1132,6 +1139,23 @@
                         state.team.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
                     if(current) sel.value = current;
                 });
+            },
+            
+            // Delete Employee
+            deleteEmployee: async (id) => {
+                if(!confirm('ยืนยันลบพนักงานคนนี้ออกจากระบบ? ข้อมูลการลาและงานที่มอบหมายอาจได้รับผลกระทบ')) return;
+                
+                try {
+                    const { error } = await db.from('profiles').delete().eq('id', id);
+                    if(error) throw error;
+                    
+                    alert('ลบพนักงานเรียบร้อย');
+                    app.loadTeam(); // Reload list
+                    // Note: This only deletes from public.profiles table. 
+                    // The Auth User remains but without profile they can't effectively use the app.
+                } catch(err) {
+                    alert('เกิดข้อผิดพลาดในการลบ: ' + err.message);
+                }
             },
             
             // View Tasks Modal
@@ -1230,7 +1254,14 @@
                                 <option value="admin" ${p.role === 'admin' ? 'selected' : ''}>Admin</option>
                             </select>
                         </td>
-                        <td class="p-4 text-right"><span class="text-xs text-green-600 font-bold">Auto-Saved</span></td>
+                        <td class="p-4 text-right">
+                             <div class="flex justify-end gap-2 items-center">
+                                <span class="text-xs text-green-600 font-bold mr-2">Auto-Saved</span>
+                                <button onclick="app.deleteEmployee('${p.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="ลบพนักงาน">
+                                    <i data-lucide="trash-2" width="16"></i>
+                                </button>
+                             </div>
+                        </td>
                     </tr>
                 `).join('');
 
@@ -1535,8 +1566,11 @@
                     list.innerHTML = `<div class="text-center p-8 text-slate-400 font-light">ยังไม่มีบันทึกการประชุม</div>`;
                 } else {
                     list.innerHTML = state.meetings.map(m => `
-                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group">
-                            <div class="flex justify-between items-start mb-2">
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group relative">
+                            <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="app.deleteMeeting(${m.id})" class="text-slate-300 hover:text-red-500 bg-white rounded-full p-1 shadow-sm hover:shadow-md transition-all" title="ลบ"><i data-lucide="trash-2" width="16"></i></button>
+                            </div>
+                            <div class="flex justify-between items-start mb-2 pr-8">
                                 <div>
                                     <h3 class="font-bold text-lg text-slate-800">${m.title}</h3>
                                     <div class="flex items-center gap-2 text-xs text-slate-500 mt-1">
@@ -1584,6 +1618,12 @@
                     app.toggleMeetingForm();
                     app.loadMeetings();
                 }
+            },
+            deleteMeeting: async (id) => {
+                if(!confirm('ยืนยันลบบันทึกการประชุมนี้?')) return;
+                const { error } = await db.from('meetings').delete().eq('id', id);
+                if(error) alert('ลบไม่ได้: ' + error.message);
+                else app.loadMeetings();
             },
 
             // CHECK-IN
