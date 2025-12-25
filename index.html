@@ -861,30 +861,31 @@
                 </div>
 
                 <!-- Report Page -->
-                <div id="page-report" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-report" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 hidden page-transition bg-slate-50">
                     <div class="flex items-center justify-between">
-                        <h2 class="text-2xl font-bold text-slate-800">📄 รายงานการลงเวลา</h2>
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">📄 รายงานสรุปภาพรวม</h2>
+                            <p class="text-slate-500 text-sm mt-1">สถิติการมาสายและการลาของพนักงาน</p>
+                        </div>
                         <button onclick="app.downloadCSV()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-lg shadow-emerald-100 flex items-center gap-2 transition-transform active:scale-95">
                             <i data-lucide="download" width="18"></i> <span class="hidden sm:inline">Download CSV</span>
                         </button>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th class="p-4 font-semibold text-slate-600">วันที่</th>
-                                        <th class="p-4 font-semibold text-slate-600">พนักงาน</th>
-                                        <th class="p-4 font-semibold text-slate-600">เวลาเข้า</th>
-                                        <th class="p-4 font-semibold text-slate-600">เวลาออก</th>
-                                        <th class="p-4 font-semibold text-slate-600">สถานะ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="report-table-body" class="divide-y divide-slate-100">
-                                    <!-- Rows here -->
-                                </tbody>
-                            </table>
+                    <!-- Summary Cards Grid -->
+                    <div id="report-summary-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        <!-- JS renders employee summary cards here -->
+                        <div class="col-span-full text-center py-8"><div class="loader loader-dark"></div></div>
+                    </div>
+
+                    <div class="border-t border-slate-200 my-4"></div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i data-lucide="calendar-days" width="20"></i> รายละเอียดรายวัน
+                        </h3>
+                        <div id="report-daily-container" class="space-y-6">
+                            <!-- JS renders daily groups here -->
                         </div>
                     </div>
                 </div>
@@ -2435,37 +2436,227 @@ SKYNET:
                 app.loadCheckin();
             },
             handleCheckOut: async () => {
-                const timeStr = new Date().toLocaleTimeString('th-TH');
-                await db.from('attendance').update({ check_out: timeStr }).eq('id', state.attendance.id);
-                app.loadCheckin();
-            },
-            downloadCSV: () => { /* Same CSV Logic */ },
-            
-            // REPORTS
-            loadReport: async () => {
-                const { data } = await db.from('attendance').select('*').order('date', { ascending: false });
-                state.allAttendance = data || [];
+                const now = new Date();
+                const leaveStart = new Date();
+                leaveStart.setHours(17, 30, 0, 0); // 17:30
                 
-                const tbody = getEl('report-table-body');
-                tbody.innerHTML = '';
+                let confirmMsg = 'ยืนยันลงเวลาออกงาน?';
+                if(now < leaveStart) {
+                     confirmMsg = '⚠️ ยังไม่ถึงเวลาเลิกงาน (17:30 น.)\nยืนยันจะลงเวลาออกก่อนกำหนดหรือไม่?';
+                }
                 
-                if (state.allAttendance.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400 font-light">ยังไม่มีข้อมูลการลงเวลา</td></tr>';
+                if(!confirm(confirmMsg)) return;
+                
+                // FIX V2: Re-fetch ID if missing to prevent "undefined reading id" error
+                let record = state.attendance || state.todayAttendance;
+                
+                if (!record || !record.id) {
+                    // Try fetching current attendance from DB
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const { data, error } = await db.from('attendance')
+                        .select('*')
+                        .eq('user_id', state.user.id)
+                        .eq('date', todayStr)
+                        .single();
+                        
+                    if (data) record = data;
+                }
+
+                if (!record || !record.id) {
+                    alert('❌ ไม่พบข้อมูลการเข้างานวันนี้ กรุณาตรวจสอบว่าได้กดเข้างานแล้วหรือไม่');
                     return;
                 }
 
-                state.allAttendance.forEach(r => {
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 border-b border-slate-50 transition-colors";
-                    tr.innerHTML = `
-                        <td class="p-4 text-slate-500">${r.date}</td>
-                        <td class="p-4 font-medium text-slate-800">${r.user_name}</td>
-                        <td class="p-4 text-emerald-600 font-medium">${r.check_in}</td>
-                        <td class="p-4 text-slate-500">${r.check_out || '-'}</td>
-                        <td class="p-4"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold">Present</span></td>
-                    `;
-                    tbody.appendChild(tr);
+                const timeStr = now.toLocaleTimeString('th-TH');
+                const { error: updateError } = await db.from('attendance').update({ check_out: timeStr }).eq('id', record.id);
+                
+                if(updateError) {
+                    alert('เกิดข้อผิดพลาด: ' + updateError.message);
+                    return;
+                }
+
+                alert('✅ ลงเวลาออกงานเรียบร้อย');
+                
+                // อัปเดตข้อมูลในตัวแปรทันที ไม่ต้องรอโหลดใหม่
+                if (state.attendance) state.attendance.check_out = timeStr;
+                if (state.todayAttendance) state.todayAttendance.check_out = timeStr;
+
+                app.loadCheckin();
+            },
+            
+            // DOWNLOAD CSV
+            downloadCSV: () => {
+                const data = state.allAttendance;
+                if (!data || data.length === 0) {
+                    alert("ไม่พบข้อมูลสำหรับการดาวน์โหลด");
+                    return;
+                }
+
+                // Define headers
+                const headers = ["Date", "Employee Name", "Check In", "Check Out", "Status"];
+                
+                // Map data to rows
+                const rows = data.map(row => [
+                    row.date,
+                    `"${row.user_name || ''}"`, // Wrap name in quotes to handle commas
+                    row.check_in,
+                    row.check_out || '-',
+                    row.status
+                ]);
+
+                // Combine headers and rows
+                const csvContent = [
+                    headers.join(","),
+                    ...rows.map(e => e.join(","))
+                ].join("\n");
+
+                // Add BOM for Excel UTF-8 compatibility
+                const bom = "\uFEFF";
+                const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.setAttribute("href", url);
+                link.setAttribute("download", `attendance_report_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = "hidden";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            },
+            
+            // REPORTS
+            loadReport: async () => {
+                const summaryGrid = getEl('report-summary-grid');
+                const dailyContainer = getEl('report-daily-container');
+                
+                // Show Loading
+                summaryGrid.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader loader-dark"></div></div>';
+                dailyContainer.innerHTML = '';
+
+                // Fetch Data: Attendance, Leaves, Profiles
+                const [ { data: attendance }, { data: leaves }, { data: profiles } ] = await Promise.all([
+                    db.from('attendance').select('*').order('date', { ascending: false }),
+                    db.from('leaves').select('*').eq('status', 'Approved'),
+                    db.from('profiles').select('*')
+                ]);
+
+                state.allAttendance = attendance || [];
+                const allLeaves = leaves || [];
+                const allProfiles = profiles || [];
+
+                // 1. GENERATE SUMMARY (PER PERSON)
+                const summaryData = {};
+                
+                // Init structure
+                allProfiles.forEach(p => {
+                    summaryData[p.name] = { 
+                        name: p.name, 
+                        role: p.position || p.role, 
+                        late: 0, 
+                        leaves: 0,
+                        avatar: p.name.charAt(0).toUpperCase()
+                    };
                 });
+
+                // Count Late
+                state.allAttendance.forEach(a => {
+                    if (a.status === 'Late' && summaryData[a.user_name]) {
+                        summaryData[a.user_name].late++;
+                    }
+                });
+
+                // Count Leaves
+                allLeaves.forEach(l => {
+                    if (summaryData[l.user_name]) {
+                        summaryData[l.user_name].leaves++;
+                    }
+                });
+
+                // Render Summary Cards
+                summaryGrid.innerHTML = Object.values(summaryData).map(p => `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold shadow-sm">
+                                ${p.avatar}
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="font-bold text-slate-800 truncate">${p.name}</p>
+                                <p class="text-xs text-slate-500 truncate capitalize">${p.role}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <div class="bg-red-50 p-2 rounded-xl text-center border border-red-100">
+                                <p class="text-xs text-red-400 font-bold uppercase">มาสาย</p>
+                                <p class="text-xl font-bold text-red-600">${p.late}</p>
+                                <p class="text-[10px] text-red-400">ครั้ง</p>
+                            </div>
+                            <div class="bg-amber-50 p-2 rounded-xl text-center border border-amber-100">
+                                <p class="text-xs text-amber-500 font-bold uppercase">ลางาน</p>
+                                <p class="text-xl font-bold text-amber-600">${p.leaves}</p>
+                                <p class="text-[10px] text-amber-500">วัน</p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+
+                // 2. GENERATE DAILY REPORT (GROUP BY DATE)
+                if (state.allAttendance.length === 0) {
+                    dailyContainer.innerHTML = '<div class="text-center p-8 text-slate-400 font-light border-2 border-dashed border-slate-200 rounded-2xl">ยังไม่มีข้อมูลการลงเวลา</div>';
+                    lucide.createIcons();
+                    return;
+                }
+
+                // Grouping
+                const grouped = {};
+                state.allAttendance.forEach(row => {
+                    if (!grouped[row.date]) grouped[row.date] = [];
+                    grouped[row.date].push(row);
+                });
+
+                // Render Groups
+                dailyContainer.innerHTML = Object.keys(grouped).map(dateKey => {
+                    const rows = grouped[dateKey].map(r => {
+                        let statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold border border-emerald-100">ตรงเวลา</span>`;
+                        if (r.status === 'Late') statusBadge = `<span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-100">มาสาย</span>`;
+                        
+                        return `
+                        <tr class="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0">
+                            <td class="p-4 font-medium text-slate-700">${r.user_name}</td>
+                            <td class="p-4 text-slate-600 font-mono text-xs">${r.check_in}</td>
+                            <td class="p-4 text-slate-600 font-mono text-xs">${r.check_out || '-'}</td>
+                            <td class="p-4 text-right">${statusBadge}</td>
+                        </tr>
+                        `;
+                    }).join('');
+
+                    return `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                            <span class="font-bold text-slate-700 flex items-center gap-2">
+                                <i data-lucide="calendar" width="16" class="text-indigo-500"></i> ${formatDate(dateKey)}
+                            </span>
+                            <span class="text-xs text-slate-400">${grouped[dateKey].length} คน</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-white border-b border-slate-100 text-xs text-slate-400 uppercase">
+                                    <tr>
+                                        <th class="p-4 font-medium w-1/3">พนักงาน</th>
+                                        <th class="p-4 font-medium">เวลาเข้า</th>
+                                        <th class="p-4 font-medium">เวลาออก</th>
+                                        <th class="p-4 font-medium text-right">สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                
+                lucide.createIcons();
             },
         };
 
