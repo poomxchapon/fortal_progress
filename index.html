@@ -1042,8 +1042,8 @@
 
             quickCheckAction: (mode) => {
                 if (mode === 'checkout') {
-                    if(!confirm('ยืนยันลงเวลาออกงาน?')) return;
-                    app.handleCheckOut().then(() => app.loadDashboard()); // Reload dashboard to update card
+                    // ไม่ต้อง confirm ตรงนี้ซ้ำ เพราะ handleCheckOut มี confirm เรื่องเวลาอยู่แล้ว
+                    app.handleCheckOut().then(() => app.loadDashboard()); 
                 } else {
                     // Check In Logic (Simplified for Quick Button)
                     const btn = getEl('btn-dash-checkin');
@@ -1746,12 +1746,69 @@
             handleCheckIn: async () => {
                 const todayStr = new Date().toISOString().split('T')[0];
                 const timeStr = new Date().toLocaleTimeString('th-TH');
-                await db.from('attendance').insert({ user_id: state.user.id, user_name: state.profile.name, date: todayStr, check_in: timeStr, status: 'Present', location: state.location });
+                
+                // Logic for Late Check-in (09:30)
+                const now = new Date();
+                const workStart = new Date();
+                workStart.setHours(9, 30, 0, 0); // 09:30
+                
+                let status = 'On Time';
+                let alertMsg = '✅ ลงเวลาเข้างานเรียบร้อย (ตรงเวลา)';
+                
+                if(now > workStart) {
+                    const diffMs = now - workStart;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const hours = Math.floor(diffMins / 60);
+                    const mins = diffMins % 60;
+                    
+                    status = 'Late';
+                    let lateText = `${mins} นาที`;
+                    if(hours > 0) lateText = `${hours} ชั่วโมง ${mins} นาที`;
+                    
+                    alertMsg = `⚠️ ลงเวลาเข้างานเรียบร้อย\n❗ คุณมาสาย ${lateText}`;
+                }
+
+                await db.from('attendance').insert({
+                    user_id: state.user.id,
+                    user_name: state.profile.name,
+                    date: todayStr,
+                    check_in: timeStr,
+                    status: status,
+                    location: state.location
+                });
+                
+                alert(alertMsg);
                 app.loadCheckin();
             },
             handleCheckOut: async () => {
-                const timeStr = new Date().toLocaleTimeString('th-TH');
-                await db.from('attendance').update({ check_out: timeStr }).eq('id', state.attendance.id);
+                const now = new Date();
+                const leaveStart = new Date();
+                leaveStart.setHours(17, 30, 0, 0); // 17:30
+                
+                let confirmMsg = 'ยืนยันลงเวลาออกงาน?';
+                if(now < leaveStart) {
+                     confirmMsg = '⚠️ ยังไม่ถึงเวลาเลิกงาน (17:30 น.)\nยืนยันจะลงเวลาออกก่อนกำหนดหรือไม่?';
+                }
+                
+                if(!confirm(confirmMsg)) return;
+                
+                // FIX: ใช้ข้อมูลจาก state.attendance หรือ state.todayAttendance ก็ได้ (กัน Error)
+                const record = state.attendance || state.todayAttendance;
+
+                if (!record || !record.id) {
+                    alert('❌ ไม่พบข้อมูลการเข้างาน กรุณารีเฟรชหน้าจอแล้วลองใหม่');
+                    return;
+                }
+
+                const timeStr = now.toLocaleTimeString('th-TH');
+                await db.from('attendance').update({ check_out: timeStr }).eq('id', record.id);
+                
+                alert('✅ ลงเวลาออกงานเรียบร้อย');
+                
+                // อัปเดตข้อมูลในตัวแปรทันที ไม่ต้องรอโหลดใหม่
+                if (state.attendance) state.attendance.check_out = timeStr;
+                if (state.todayAttendance) state.todayAttendance.check_out = timeStr;
+
                 app.loadCheckin();
             },
             downloadCSV: () => { /* Same CSV Logic */ },
