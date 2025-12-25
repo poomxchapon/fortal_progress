@@ -224,25 +224,24 @@
                     <!-- Bento Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-min">
                         
-                        <!-- Panel: My Status (2x1) -->
-                        <div class="col-span-1 md:col-span-2 bento-card bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden">
-                            <div class="flex justify-between items-start">
+                        <!-- Panel: QUICK CHECK-IN (Replaces Status) (2x1) -->
+                        <div class="col-span-1 md:col-span-2 bento-card bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden group">
+                            <div class="flex justify-between items-start z-10 relative">
                                 <div>
-                                    <span class="text-indigo-100 text-xs font-medium bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm">My Status</span>
-                                    <div class="flex items-center gap-2 mt-3">
-                                        <div class="relative">
-                                            <span class="w-3 h-3 rounded-full bg-emerald-400 block"></span>
-                                            <span class="w-3 h-3 rounded-full bg-emerald-400 block animate-ping absolute top-0 left-0 opacity-75"></span>
-                                        </div>
-                                        <span class="text-2xl font-bold">Online</span>
+                                    <span class="text-indigo-100 text-xs font-medium bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1 w-fit">
+                                        <i data-lucide="clock" width="12"></i> ลงเวลาเข้างาน
+                                    </span>
+                                    <div class="mt-3">
+                                        <div id="dash-checkin-status" class="text-2xl font-bold">กำลังโหลด...</div>
+                                        <div id="dash-checkin-time" class="text-xs text-indigo-100 opacity-90 mt-0.5">...</div>
                                     </div>
                                 </div>
-                                <i data-lucide="user-check" class="text-white/50 w-8 h-8"></i>
+                                <button id="btn-dash-checkin" onclick="app.quickCheckAction()" class="bg-white text-indigo-600 p-3 rounded-full shadow-lg hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <i data-lucide="map-pin" width="24"></i>
+                                </button>
                             </div>
-                            <div class="flex items-center justify-between mt-auto">
-                                <p class="text-indigo-100 text-sm opacity-90 capitalize" id="dash-role">Employee</p>
-                                <p class="text-xs text-indigo-200">WorkSpace System</p>
-                            </div>
+                            <!-- Decor -->
+                            <i data-lucide="map" class="absolute -bottom-4 -right-4 text-white/10 w-32 h-32 rotate-12"></i>
                         </div>
 
                         <!-- Panel: Total Tasks (1x1) -->
@@ -674,7 +673,8 @@
             leaves: [],
             team: [],
             location: null,
-            currentMonth: new Date()
+            currentMonth: new Date(),
+            todayAttendance: null // Store today's attendance for quick check-in
         };
 
         // UTILS
@@ -838,14 +838,16 @@
                 const elPending = getEl('dash-pending-tasks');
                 if(elPending) elPending.innerText = myTasks.filter(t => t.status !== 'Done').length;
 
-                const elRole = getEl('dash-role');
-                if(elRole) elRole.innerText = state.profile.role;
-
                 const elDate = getEl('current-date');
                 if(elDate) elDate.innerText = formatDate(new Date());
 
-                // Who's on Leave Today
+                // Fetch Today's Attendance for Dashboard Card
                 const todayStr = new Date().toISOString().split('T')[0];
+                const { data: todayAtt } = await db.from('attendance').select('*').eq('user_id', state.user.id).eq('date', todayStr);
+                state.todayAttendance = (todayAtt && todayAtt.length > 0) ? todayAtt[0] : null;
+                app.renderDashAttendance();
+
+                // Who's on Leave Today
                 const todaysLeaves = state.leaves.filter(l => l.date === todayStr);
                 const leaveListEl = getEl('dash-leave-list');
                 if(leaveListEl) {
@@ -916,6 +918,70 @@
                 // Render City
                 app.renderCity(doneCount, progressCount, todoCount);
                 lucide.createIcons();
+            },
+
+            renderDashAttendance: () => {
+                const statusEl = getEl('dash-checkin-status');
+                const timeEl = getEl('dash-checkin-time');
+                const btn = getEl('btn-dash-checkin');
+
+                if (state.todayAttendance) {
+                    if (state.todayAttendance.check_out) {
+                        statusEl.innerText = "ออกงานแล้ว";
+                        timeEl.innerText = `ออกเวลา: ${state.todayAttendance.check_out}`;
+                        btn.innerHTML = '<i data-lucide="check" width="24"></i>';
+                        btn.disabled = true;
+                        btn.classList.add('bg-slate-100', 'text-slate-400');
+                        btn.classList.remove('bg-white', 'text-indigo-600', 'hover:scale-110');
+                    } else {
+                        statusEl.innerText = "เข้างานแล้ว";
+                        timeEl.innerText = `เข้าเวลา: ${state.todayAttendance.check_in}`;
+                        btn.innerHTML = '<i data-lucide="log-out" width="24"></i>';
+                        btn.onclick = () => app.quickCheckAction('checkout'); // Pass checkout mode
+                    }
+                } else {
+                    statusEl.innerText = "ยังไม่เข้างาน";
+                    timeEl.innerText = "คลิกเพื่อลงเวลา";
+                    btn.innerHTML = '<i data-lucide="map-pin" width="24"></i>';
+                    btn.onclick = () => app.quickCheckAction('checkin');
+                    btn.disabled = false;
+                    btn.classList.remove('bg-slate-100', 'text-slate-400');
+                    btn.classList.add('bg-white', 'text-indigo-600', 'hover:scale-110');
+                }
+                lucide.createIcons();
+            },
+
+            quickCheckAction: (mode) => {
+                if (mode === 'checkout') {
+                    if(!confirm('ยืนยันลงเวลาออกงาน?')) return;
+                    app.handleCheckOut().then(() => app.loadDashboard()); // Reload dashboard to update card
+                } else {
+                    // Check In Logic (Simplified for Quick Button)
+                    const btn = getEl('btn-dash-checkin');
+                    btn.innerHTML = '<div class="loader loader-dark" style="width:20px;height:20px;"></div>';
+                    
+                    navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                            const { latitude, longitude } = pos.coords;
+                            const R=6371e3, φ1=latitude*Math.PI/180, φ2=OFFICE_LOCATION.lat*Math.PI/180, Δφ=(OFFICE_LOCATION.lat-latitude)*Math.PI/180, Δλ=(OFFICE_LOCATION.lng-longitude)*Math.PI/180;
+                            const a=Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2, c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+                            const dist = Math.round(R*c);
+                            
+                            if (dist <= MAX_DIST) {
+                                await app.handleCheckIn();
+                                await app.loadDashboard(); // Refresh UI
+                                alert('✅ ลงเวลาเข้างานเรียบร้อย');
+                            } else {
+                                alert(`❌ คุณอยู่นอกพื้นที่ (${dist} ม.) กรุณาขยับเข้าใกล้ออฟฟิศ`);
+                                app.renderDashAttendance(); // Reset button
+                            }
+                        },
+                        (err) => {
+                            alert('⚠️ ไม่สามารถระบุตำแหน่งได้ กรุณาเปิด GPS');
+                            app.renderDashAttendance(); // Reset button
+                        }
+                    );
+                }
             },
             
             renderCity: (done, progress, todo) => {
