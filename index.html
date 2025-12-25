@@ -59,7 +59,7 @@
         .bento-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); z-index: 10; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen overflow-hidden flex flex-col">
+<body class="bg-slate-50 text-slate-800 h-screen h-[100dvh] overflow-hidden flex flex-col">
 
     <!-- ================= AUTH VIEW ================= -->
     <div id="auth-view" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-white sm:bg-slate-50">
@@ -118,10 +118,10 @@
     <!-- ================= APP VIEW ================= -->
     <div id="app-view" class="hidden flex h-full">
         <!-- Mobile Sidebar Overlay -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl lg:shadow-none">
+        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl lg:shadow-none">
             <div class="p-8 pb-4">
                 <div class="flex items-center gap-4">
                     <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-200">
@@ -203,11 +203,11 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50" id="main-content-area">
             <!-- Header (Mobile) -->
-            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-20">
+            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-30">
                 <div class="flex items-center gap-2.5">
                     <span class="font-bold text-slate-800">WorkSpace</span>
                 </div>
-                <button id="menu-btn" class="p-2 hover:bg-slate-100 rounded-lg">
+                <button id="menu-btn" class="p-2 hover:bg-slate-100 rounded-lg min-w-[40px] min-h-[40px] flex items-center justify-center">
                     <i data-lucide="menu" class="text-slate-600"></i>
                 </button>
             </header>
@@ -695,7 +695,7 @@
 
     <!-- Modals -->
     <!-- Edit Profile Modal -->
-    <div id="modal-edit-profile" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modal-edit-profile" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all scale-100">
             <h3 class="text-xl font-bold mb-4 text-slate-800">แก้ไขข้อมูลส่วนตัว</h3>
             <form id="form-edit-profile" class="space-y-4">
@@ -717,7 +717,7 @@
     </div>
 
     <!-- User Tasks Modal -->
-    <div id="modal-user-tasks" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modal-user-tasks" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-slate-800"><i data-lucide="check-square" class="inline w-5 h-5 text-indigo-600 mr-2"></i>งานของ <span id="modal-task-username">...</span></h3>
@@ -1159,9 +1159,16 @@
                                     <p class="text-xs text-slate-400 mt-1">${p.email}</p>
                                 </div>
                             </div>
-                            <button onclick="app.viewUserTasks('${p.name}')" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
-                                ดูงาน
-                            </button>
+                            <div class="flex gap-2">
+                                ${state.profile.role === 'admin' ? `
+                                    <button onclick="app.deleteEmployee('${p.id}')" class="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors font-medium">
+                                        ลบ
+                                    </button>
+                                ` : ''}
+                                <button onclick="app.viewUserTasks('${p.name}')" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors font-medium">
+                                    ดูงาน
+                                </button>
+                            </div>
                         </div>
                     `).join('');
                 }
@@ -1173,6 +1180,23 @@
                         state.team.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
                     if(current) sel.value = current;
                 });
+            },
+            
+            // Delete Employee
+            deleteEmployee: async (id) => {
+                if(!confirm('ยืนยันลบพนักงานคนนี้ออกจากระบบ? ข้อมูลการลาและงานที่มอบหมายอาจได้รับผลกระทบ')) return;
+                
+                try {
+                    const { error } = await db.from('profiles').delete().eq('id', id);
+                    if(error) throw error;
+                    
+                    alert('ลบพนักงานเรียบร้อย');
+                    app.loadTeam(); // Reload list
+                    // Note: This only deletes from public.profiles table. 
+                    // The Auth User remains but without profile they can't effectively use the app.
+                } catch(err) {
+                    alert('เกิดข้อผิดพลาดในการลบ: ' + err.message);
+                }
             },
             
             // View Tasks Modal
@@ -1271,7 +1295,14 @@
                                 <option value="admin" ${p.role === 'admin' ? 'selected' : ''}>Admin</option>
                             </select>
                         </td>
-                        <td class="p-4 text-right"><span class="text-xs text-green-600 font-bold">Auto-Saved</span></td>
+                        <td class="p-4 text-right">
+                             <div class="flex justify-end gap-2 items-center">
+                                <span class="text-xs text-green-600 font-bold mr-2">Auto-Saved</span>
+                                <button onclick="app.deleteEmployee('${p.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="ลบพนักงาน">
+                                    <i data-lucide="trash-2" width="16"></i>
+                                </button>
+                             </div>
+                        </td>
                     </tr>
                 `).join('');
 
