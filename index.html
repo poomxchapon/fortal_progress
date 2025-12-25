@@ -153,7 +153,7 @@
         .cyberpunk ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 2px; }
         .cyberpunk ::-webkit-scrollbar-track { background: #050505; }
 
-        /* Headers - Reverted to Prompt for consistency */
+        /* Headers */
         .cyberpunk h1, .cyberpunk h2, .cyberpunk h3 {
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -729,6 +729,29 @@
                 <!-- Leave Page (NEW) -->
                 <div id="page-leave" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">☕ ขอลาหยุด</h2>
+                    <div class="flex justify-between items-center mb-6">
+                         <!-- Leave Summary Cards here -->
+                    </div>
+                    
+                    <!-- Leave Summary Cards -->
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 text-center">
+                            <p class="text-xs text-indigo-400 font-bold uppercase tracking-wider">โควตาทั้งหมด</p>
+                            <p class="text-2xl font-bold text-indigo-600" id="leave-quota-total">0</p>
+                            <p class="text-xs text-indigo-400">วัน/ปี</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">ใช้ไปแล้ว</p>
+                            <p class="text-2xl font-bold text-slate-600" id="leave-quota-used">0</p>
+                            <p class="text-xs text-slate-400">วัน</p>
+                        </div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center">
+                            <p class="text-xs text-emerald-400 font-bold uppercase tracking-wider">คงเหลือ</p>
+                            <p class="text-2xl font-bold text-emerald-600" id="leave-quota-remaining">0</p>
+                            <p class="text-xs text-emerald-400">วัน</p>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="md:col-span-1 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 h-fit">
                             <h3 class="font-bold mb-4">แบบฟอร์มการลา</h3>
@@ -762,6 +785,7 @@
                     </div>
                 </div>
 
+
                 <!-- Admin Console (NEW) -->
                 <div id="page-admin" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">🛡️ ผู้ดูแลระบบ (Admin Console)</h2>
@@ -781,9 +805,9 @@
                                     <thead class="bg-slate-50 border-b border-slate-100">
                                         <tr>
                                             <th class="p-4 font-semibold text-slate-600">ชื่อ-นามสกุล</th>
-                                            <th class="p-4 font-semibold text-slate-600">อีเมล</th>
                                             <th class="p-4 font-semibold text-slate-600">ตำแหน่ง</th>
                                             <th class="p-4 font-semibold text-slate-600">สิทธิ์ (Role)</th>
+                                            <th class="p-4 font-semibold text-slate-600">โควตาวันลา</th> <!-- Added Quota Column -->
                                             <th class="p-4 font-semibold text-slate-600 text-right">จัดการ</th>
                                         </tr>
                                     </thead>
@@ -1825,6 +1849,17 @@ SKYNET:
                     }
                 }
             },
+            
+            // QUOTA MANAGEMENT
+            updateQuota: async (id, value) => {
+                try {
+                    const { error } = await db.from('profiles').update({ leave_quota: value }).eq('id', id);
+                    if (error) throw error;
+                    // Optional: Show success toast
+                } catch(err) {
+                    alert("อัปเดตโควตาไม่สำเร็จ: " + err.message);
+                }
+            },
 
             // ADMIN CONSOLE
             loadAdmin: async () => {
@@ -1834,20 +1869,19 @@ SKYNET:
                 const empList = getEl('admin-employee-list');
                 empList.innerHTML = state.team.map(p => `
                     <tr class="hover:bg-slate-50">
-                        <td class="p-4">${p.name}</td>
-                        <td class="p-4 text-slate-500">${p.email}</td>
-                        <td class="p-4">
-                            <input type="text" value="${p.position || ''}" class="border rounded px-2 py-1 text-xs w-24" onchange="app.updatePosition('${p.id}', this.value)">
-                        </td>
+                        <td class="p-4 font-medium">${p.name}</td>
+                        <td class="p-4 text-slate-500">${p.position || '-'}</td>
                         <td class="p-4">
                             <select class="border rounded px-2 py-1 text-xs" onchange="app.updateRole('${p.id}', this.value)">
                                 <option value="employee" ${p.role === 'employee' ? 'selected' : ''}>Employee</option>
                                 <option value="admin" ${p.role === 'admin' ? 'selected' : ''}>Admin</option>
                             </select>
                         </td>
+                        <td class="p-4">
+                            <input type="number" value="${p.leave_quota || 15}" class="border rounded px-2 py-1 text-xs w-16 text-center" onchange="app.updateQuota('${p.id}', this.value)">
+                        </td>
                         <td class="p-4 text-right">
                              <div class="flex justify-end gap-2 items-center">
-                                <span class="text-xs text-green-600 font-bold mr-2">Auto-Saved</span>
                                 <button onclick="app.deleteEmployee('${p.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="ลบพนักงาน">
                                     <i data-lucide="trash-2" width="16"></i>
                                 </button>
@@ -2081,6 +2115,33 @@ SKYNET:
                 const { data } = await db.from('leaves').select('*').order('date', { ascending: false });
                 state.leaves = data || [];
                 
+                // --- START FIX: Calculate & Display Leave Quota ---
+                const totalQuota = state.profile.leave_quota || 15; // Default quota
+                const myApprovedLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
+                const usedLeaves = myApprovedLeaves.length;
+                const remaining = totalQuota - usedLeaves;
+
+                // Update UI Elements
+                const elTotal = getEl('leave-quota-total');
+                if(elTotal) elTotal.innerText = totalQuota;
+                
+                const elUsed = getEl('leave-quota-used');
+                if(elUsed) elUsed.innerText = usedLeaves;
+
+                const elRemaining = getEl('leave-quota-remaining');
+                if(elRemaining) {
+                    elRemaining.innerText = remaining;
+                    // Change text color if quota exceeded
+                    if(remaining <= 0) {
+                        elRemaining.classList.remove('text-emerald-600');
+                        elRemaining.classList.add('text-red-600');
+                    } else {
+                        elRemaining.classList.remove('text-red-600');
+                        elRemaining.classList.add('text-emerald-600');
+                    }
+                }
+                // --- END FIX ---
+
                 const list = getEl('leave-list');
                 list.innerHTML = state.leaves.map(l => {
                     let statusColor = 'bg-slate-100 text-slate-500';
@@ -2107,6 +2168,15 @@ SKYNET:
                 const reason = getEl('leave-reason').value;
                 
                 if(!date) return alert('กรุณาเลือกวันที่');
+
+                // Check Quota before submitting
+                const myLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
+                const used = myLeaves.length;
+                const quota = state.profile.leave_quota || 15;
+                
+                if (used >= quota) {
+                    return alert(`คุณใช้วันลาครบโควตาแล้ว (${quota} วัน) ไม่สามารถลาเพิ่มได้`);
+                }
 
                 const { error } = await db.from('leaves').insert({
                     user_id: state.user.id,
@@ -2353,86 +2423,12 @@ SKYNET:
             handleCheckIn: async () => {
                 const todayStr = new Date().toISOString().split('T')[0];
                 const timeStr = new Date().toLocaleTimeString('th-TH');
-                
-                // Logic for Late Check-in (09:30)
-                const now = new Date();
-                const workStart = new Date();
-                workStart.setHours(9, 30, 0, 0); // 09:30
-                
-                let status = 'On Time';
-                let alertMsg = '✅ ลงเวลาเข้างานเรียบร้อย (ตรงเวลา)';
-                
-                if(now > workStart) {
-                    const diffMs = now - workStart;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const hours = Math.floor(diffMins / 60);
-                    const mins = diffMins % 60;
-                    
-                    status = 'Late';
-                    let lateText = `${mins} นาที`;
-                    if(hours > 0) lateText = `${hours} ชั่วโมง ${mins} นาที`;
-                    
-                    alertMsg = `⚠️ ลงเวลาเข้างานเรียบร้อย\n❗ คุณมาสาย ${lateText}`;
-                }
-
-                await db.from('attendance').insert({
-                    user_id: state.user.id,
-                    user_name: state.profile.name,
-                    date: todayStr,
-                    check_in: timeStr,
-                    status: status,
-                    location: state.location
-                });
-                
-                alert(alertMsg);
+                await db.from('attendance').insert({ user_id: state.user.id, user_name: state.profile.name, date: todayStr, check_in: timeStr, status: 'Present', location: state.location });
                 app.loadCheckin();
             },
             handleCheckOut: async () => {
-                const now = new Date();
-                const leaveStart = new Date();
-                leaveStart.setHours(17, 30, 0, 0); // 17:30
-                
-                let confirmMsg = 'ยืนยันลงเวลาออกงาน?';
-                if(now < leaveStart) {
-                     confirmMsg = '⚠️ ยังไม่ถึงเวลาเลิกงาน (17:30 น.)\nยืนยันจะลงเวลาออกก่อนกำหนดหรือไม่?';
-                }
-                
-                if(!confirm(confirmMsg)) return;
-                
-                // FIX V2: Re-fetch ID if missing to prevent "undefined reading id" error
-                let record = state.attendance || state.todayAttendance;
-                
-                if (!record || !record.id) {
-                    // Try fetching current attendance from DB
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    const { data, error } = await db.from('attendance')
-                        .select('*')
-                        .eq('user_id', state.user.id)
-                        .eq('date', todayStr)
-                        .single();
-                        
-                    if (data) record = data;
-                }
-
-                if (!record || !record.id) {
-                    alert('❌ ไม่พบข้อมูลการเข้างานวันนี้ กรุณาตรวจสอบว่าได้กดเข้างานแล้วหรือไม่');
-                    return;
-                }
-
-                const timeStr = now.toLocaleTimeString('th-TH');
-                const { error: updateError } = await db.from('attendance').update({ check_out: timeStr }).eq('id', record.id);
-                
-                if(updateError) {
-                    alert('เกิดข้อผิดพลาด: ' + updateError.message);
-                    return;
-                }
-
-                alert('✅ ลงเวลาออกงานเรียบร้อย');
-                
-                // อัปเดตข้อมูลในตัวแปรทันที ไม่ต้องรอโหลดใหม่
-                if (state.attendance) state.attendance.check_out = timeStr;
-                if (state.todayAttendance) state.todayAttendance.check_out = timeStr;
-
+                const timeStr = new Date().toLocaleTimeString('th-TH');
+                await db.from('attendance').update({ check_out: timeStr }).eq('id', state.attendance.id);
                 app.loadCheckin();
             },
             downloadCSV: () => { /* Same CSV Logic */ },
@@ -2466,7 +2462,8 @@ SKYNET:
         };
 
         // EVENT LISTENERS
-        getEl('auth-form').addEventListener('submit', async (e) => {
+        // Replaced unsafe direct listeners with safe bindings
+        bind('auth-form', 'submit', async (e) => {
             e.preventDefault();
             const email = e.target.email.value;
             const pass = e.target.password.value;
@@ -2484,25 +2481,19 @@ SKYNET:
             }
         });
 
-        getEl('toggle-auth').addEventListener('click', () => {
+        bind('toggle-auth', 'click', () => {
             const isLogin = getEl('auth-title').innerText.includes('ยินดี');
             getEl('auth-title').innerText = isLogin ? 'สร้างบัญชีใหม่' : 'ยินดีต้อนรับ';
             getEl('btn-auth-text').innerText = isLogin ? 'ลงทะเบียน' : 'เข้าสู่ระบบ';
             getEl('name-field').classList.toggle('hidden');
         });
 
-        getEl('add-project-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveProject(); });
-        getEl('add-task-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveTask(); });
-        getEl('leave-form').addEventListener('submit', (e) => { e.preventDefault(); app.submitLeave(); });
-        
-        // Add Meeting Form Listener
-        getEl('add-meeting-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveMeeting(); });
-
-        // Add Event Form Listener
-        getEl('add-event-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveEvent(); });
-
-        // Chat Form Listener
-        getEl('chat-form').addEventListener('submit', (e) => { 
+        bind('add-project-form', 'submit', (e) => { e.preventDefault(); app.saveProject(); });
+        bind('add-task-form', 'submit', (e) => { e.preventDefault(); app.saveTask(); });
+        bind('leave-form', 'submit', (e) => { e.preventDefault(); app.submitLeave(); });
+        bind('add-meeting-form', 'submit', (e) => { e.preventDefault(); app.saveMeeting(); });
+        bind('add-event-form', 'submit', (e) => { e.preventDefault(); app.saveEvent(); });
+        bind('chat-form', 'submit', (e) => { 
             e.preventDefault();
             const input = getEl('chat-input');
             if (input.value.trim()) {
@@ -2511,8 +2502,18 @@ SKYNET:
             }
         });
 
-        getEl('menu-btn').addEventListener('click', () => { getEl('sidebar').classList.remove('-translate-x-full'); show('sidebar-overlay'); });
-        getEl('sidebar-overlay').addEventListener('click', () => { getEl('sidebar').classList.add('-translate-x-full'); hide('sidebar-overlay'); });
+        // Add listener for late excuse form if not handled
+        bind('form-late-excuse', 'submit', (e) => {
+            e.preventDefault(); 
+            // The button uses onclick="app.submitLateExcuse()", 
+            // but pressing Enter on inputs triggers submit event.
+            // We can call the same function or just prevent default.
+            // Let's call submitLateExcuse() to support Enter key.
+            app.submitLateExcuse();
+        });
+
+        bind('menu-btn', 'click', () => { getEl('sidebar').classList.remove('-translate-x-full'); show('sidebar-overlay'); });
+        bind('sidebar-overlay', 'click', () => { getEl('sidebar').classList.add('-translate-x-full'); hide('sidebar-overlay'); });
 
         // Make Auth and App Global
         window.auth = auth;
