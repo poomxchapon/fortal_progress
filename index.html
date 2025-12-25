@@ -19,6 +19,9 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Markdown Parser (Marked) for Chatbot response -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
         body { font-family: 'Prompt', sans-serif; -webkit-font-smoothing: antialiased; }
         .hidden { display: none !important; }
@@ -33,10 +36,20 @@
         .loader { width: 20px; height: 20px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
         .loader-dark { border-color: #4f46e5; border-bottom-color: transparent; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Typing Indicator */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; background-color: #6366f1; border-radius: 50%; height: 6px; width: 6px; display: inline-block; margin: 0 1px; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
         /* Transitions */
         .page-transition { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Chat Slide In */
+        .chat-enter { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         /* Calendar Grid */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -116,7 +129,7 @@
     </div>
 
     <!-- ================= APP VIEW ================= -->
-    <div id="app-view" class="hidden flex h-full">
+    <div id="app-view" class="hidden flex h-full relative">
         <!-- Mobile Sidebar Overlay -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
@@ -203,7 +216,7 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50" id="main-content-area">
             <!-- Header (Mobile) -->
-            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-30">
+            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-20">
                 <div class="flex items-center gap-2.5">
                     <span class="font-bold text-slate-800">WorkSpace</span>
                 </div>
@@ -471,7 +484,7 @@
                             </div>
                             <div class="md:col-span-2 flex justify-end gap-2 mt-2">
                                 <button type="button" onclick="app.toggleTaskForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึกงาน</button>
+                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
                             </div>
                         </form>
                     </div>
@@ -556,6 +569,7 @@
                                 <div id="gps-status" class="hidden text-sm mb-3">ระยะห่าง: <span id="gps-dist" class="font-bold">0</span> ม.</div>
                                 <button onclick="app.handleCheckIn()" id="btn-checkin" disabled class="w-full bg-indigo-600 text-white px-4 py-4 rounded-2xl font-bold shadow-lg disabled:bg-slate-200 disabled:shadow-none">ลงเวลาเข้างาน</button>
                             </div>
+                            <button onclick="app.toggleLateExcuseForm()" class="mt-4 text-sm text-slate-500 hover:text-indigo-600 underline">📝 ชี้แจงการมาสาย / ขอแก้ไขเวลา</button>
                         </div>
                         <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
                             <h3 class="font-bold text-slate-800 mb-4">ข้อมูลพิกัด</h3>
@@ -616,6 +630,7 @@
                     <div class="flex gap-4 border-b border-slate-200 mb-6">
                         <button onclick="app.showAdminTab('employees')" class="admin-tab text-indigo-600 border-b-2 border-indigo-600 font-medium px-4 py-2" id="tab-btn-employees">พนักงานทั้งหมด</button>
                         <button onclick="app.showAdminTab('leaves')" class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2" id="tab-btn-leaves">อนุมัติการลา</button>
+                        <button onclick="app.showAdminTab('requests')" class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2" id="tab-btn-requests">คำชี้แจงเวลา</button>
                     </div>
 
                     <!-- Employee Management -->
@@ -658,6 +673,27 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Attendance Requests Approval (New) -->
+                    <div id="admin-requests" class="admin-section hidden">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-100">
+                                        <tr>
+                                            <th class="p-4 font-semibold text-slate-600">พนักงาน</th>
+                                            <th class="p-4 font-semibold text-slate-600">วันที่</th>
+                                            <th class="p-4 font-semibold text-slate-600">เหตุผล/คำชี้แจง</th>
+                                            <th class="p-4 font-semibold text-slate-600">หลักฐาน</th>
+                                            <th class="p-4 font-semibold text-slate-600">สถานะ</th>
+                                            <th class="p-4 font-semibold text-slate-600 text-right">ดำเนินการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-request-list" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Report Page -->
@@ -691,6 +727,54 @@
 
             </div>
         </main>
+    </div>
+    
+    <!-- Chat Widget -->
+    <div id="chat-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+        <!-- Chat Window -->
+        <div id="chat-window" class="hidden bg-white w-80 sm:w-96 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden pointer-events-auto chat-enter">
+            <div class="bg-indigo-600 p-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 p-1.5 rounded-lg"><i data-lucide="bot" width="20"></i></div>
+                    <div>
+                        <h4 class="font-bold text-sm">น้องสกายเน็ต (Skynet)</h4>
+                        <p class="text-[10px] text-indigo-200">Online • ถามได้ทุกเรื่องงาน</p>
+                    </div>
+                </div>
+                <button onclick="app.toggleChat()" class="text-white/80 hover:text-white"><i data-lucide="x" width="18"></i></button>
+            </div>
+            <div id="chat-messages" class="h-80 overflow-y-auto p-4 bg-slate-50 space-y-3 text-sm">
+                <!-- Messages will appear here -->
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><i data-lucide="bot" width="16"></i></div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700 leading-relaxed">
+                        <p>สวัสดีครับ ผมสกายเน็ต Agent ที่จะช่วยคุณให้ทำงานง่ายขึ้น มีข้อมูลอะไรให้ช่วยวิเคราะห์ไหมครับ? 🤖</p>
+                        <hr class="my-2 border-slate-100">
+                        <p class="text-xs text-slate-500">ผมทำอะไรได้บ้าง:</p>
+                        <ul class="list-disc list-inside text-xs text-slate-500 mt-1 space-y-1">
+                            <li>เช็คงานและ Deadline ของคุณ</li>
+                            <li>ยื่นใบลาป่วย / ลาพักร้อน ให้คุณ</li>
+                            <li>ถามข้อมูลเกี่ยวกับบริษัท (Strategy 2026)</li>
+                            <li>ช่วยสรุปข้อมูลต่างๆ</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 bg-white border-t border-slate-100">
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="chat-input" placeholder="พิมพ์คำถามที่นี่..." class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                    <button type="submit" class="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors">
+                        <i data-lucide="send" width="18"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button onclick="app.toggleChat()" class="bg-indigo-600 text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform active:scale-95 pointer-events-auto group relative">
+            <i data-lucide="message-circle" width="24"></i>
+            <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+        </button>
     </div>
 
     <!-- Modals -->
@@ -728,6 +812,32 @@
             </div>
         </div>
     </div>
+    
+    <!-- Late Excuse Modal -->
+    <div id="modal-late-excuse" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all scale-100">
+            <h3 class="text-xl font-bold mb-4 text-slate-800">แจ้งเหตุผลการมาสาย / ขอแก้ไขเวลา</h3>
+            <form id="form-late-excuse" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">วันที่ต้องการแก้ไข</label>
+                    <input type="date" id="excuse-date" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">เหตุผล / คำชี้แจง</label>
+                    <textarea id="excuse-reason" required placeholder="เช่น รถเสีย, มีธุระด่วน..." rows="3" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase">แนบรูปภาพ (ถ้ามี)</label>
+                    <input type="file" id="excuse-image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mt-1">
+                    <p class="text-[10px] text-slate-400 mt-1">*ระบบจะเก็บชื่อไฟล์เท่านั้นในเวอร์ชันนี้</p>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="app.closeModal('modal-late-excuse')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">ยกเลิก</button>
+                    <button type="button" onclick="app.submitLateExcuse()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งคำขอ</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- SCRIPTS -->
     <script>
@@ -737,6 +847,7 @@
         const OFFICE_LOCATION = { lat: 18.7225, lng: 99.0255 };
         const MAX_DIST = 1500; // ปรับลดระยะเหลือ 50 เมตร
         const ADMIN_EMAIL = 'poomie@live.com'; // Hardcoded Admin
+        const GEMINI_API_KEY = 'AIzaSyDmF4Br7QlxwB5UvnXxBifp6T1BVrI-4vs';
 
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -912,12 +1023,15 @@
                 const { data: leaves } = await db.from('leaves').select('*').eq('status', 'Approved');
                 state.leaves = leaves || [];
 
-                const myTasks = state.tasks.filter(t => t.assignee === state.profile.name || state.profile.role === 'admin');
+                // ปรับแก้: แสดงเฉพาะงานที่ Assign ให้ตัวเองเท่านั้น (ตัดเงื่อนไข Admin ออก)
+                const myTasks = state.tasks.filter(t => t.assignee === state.profile.name);
+                
+                // City Stats (ยังคงใช้ภาพรวมทั้งบริษัท เพื่อให้เมืองดูคึกคัก)
                 const doneCount = state.tasks.filter(t => t.status === 'Done').length;
                 const progressCount = state.tasks.filter(t => t.status === 'In Progress').length;
                 const todoCount = state.tasks.filter(t => t.status === 'To Do').length;
                 
-                // Dashboard Stats
+                // Dashboard Stats (เฉพาะของตัวเอง)
                 const elTotal = getEl('dash-total-tasks');
                 if(elTotal) elTotal.innerText = myTasks.length;
 
@@ -1275,6 +1389,262 @@
             closeModal: (id) => {
                 hide(id);
             },
+            
+            // Late Excuse
+            toggleLateExcuseForm: () => {
+                show('modal-late-excuse');
+                getEl('excuse-date').valueAsDate = new Date();
+                getEl('form-late-excuse').reset();
+            },
+            submitLateExcuse: async () => {
+                const date = getEl('excuse-date').value;
+                const reason = getEl('excuse-reason').value;
+                const imageFile = getEl('excuse-image').files[0];
+                
+                if (!date || !reason) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                
+                // For demo/prototype without Storage setup, we'll store filename
+                const imageUrl = imageFile ? `[File: ${imageFile.name}]` : '';
+
+                try {
+                    const { error } = await db.from('attendance_requests').insert({
+                        user_id: state.user.id,
+                        user_name: state.profile.name,
+                        date,
+                        reason,
+                        image_url: imageUrl,
+                        status: 'Pending'
+                    });
+                    
+                    if (error) throw error;
+                    
+                    alert('ส่งคำชี้แจงเรียบร้อยแล้ว');
+                    app.closeModal('modal-late-excuse');
+                } catch(err) {
+                    alert('เกิดข้อผิดพลาด: ' + err.message);
+                }
+            },
+            
+            // CHATBOT
+            toggleChat: () => {
+                const chatWindow = getEl('chat-window');
+                chatWindow.classList.toggle('hidden');
+                if (!chatWindow.classList.contains('hidden')) {
+                    getEl('chat-input').focus();
+                    // Scroll to bottom
+                    const chatMsgs = getEl('chat-messages');
+                    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+                }
+            },
+            
+            addChatMessage: (text, isUser = false) => {
+                const chatMsgs = getEl('chat-messages');
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex gap-3 ${isUser ? 'justify-end' : ''}`;
+                
+                if (isUser) {
+                    msgDiv.innerHTML = `
+                        <div class="bg-indigo-600 p-3 rounded-2xl rounded-tr-none shadow-sm text-white max-w-[80%]">
+                            ${text}
+                        </div>
+                    `;
+                } else {
+                    msgDiv.innerHTML = `
+                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><i data-lucide="bot" width="16"></i></div>
+                        <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700 max-w-[80%]">
+                            ${marked.parse(text)}
+                        </div>
+                    `;
+                }
+                
+                chatMsgs.appendChild(msgDiv);
+                chatMsgs.scrollTop = chatMsgs.scrollHeight;
+                lucide.createIcons();
+            },
+
+            showTyping: () => {
+                const chatMsgs = getEl('chat-messages');
+                const typingDiv = document.createElement('div');
+                typingDiv.id = 'typing-indicator';
+                typingDiv.className = 'flex gap-3';
+                typingDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><i data-lucide="bot" width="16"></i></div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 flex items-center h-10">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                chatMsgs.appendChild(typingDiv);
+                chatMsgs.scrollTop = chatMsgs.scrollHeight;
+                lucide.createIcons();
+            },
+
+            hideTyping: () => {
+                const typingDiv = getEl('typing-indicator');
+                if (typingDiv) typingDiv.remove();
+            },
+
+            getSystemContext: async () => {
+                // Gather data for context
+                if (state.tasks.length === 0) { const { data } = await db.from('tasks').select('*'); state.tasks = data || []; }
+                if (state.team.length === 0) { const { data } = await db.from('profiles').select('*'); state.team = data || []; }
+                if (state.leaves.length === 0) { const { data } = await db.from('leaves').select('*'); state.leaves = data || []; }
+                if (state.meetings.length === 0) { const { data } = await db.from('meetings').select('*'); state.meetings = data || []; }
+
+                // Format data for prompt
+                const today = new Date().toISOString().split('T')[0];
+                const currentUser = state.profile.name;
+                
+                const taskStr = state.tasks.map(t => `- Task: ${t.title} (Assignee: ${t.assignee}, Status: ${t.status}, Deadline: ${t.deadline || 'None'})`).join('\n');
+                const teamStr = state.team.map(p => `- ${p.name} (${p.position || p.role})`).join('\n');
+                const leaveStr = state.leaves.filter(l => l.date >= today).map(l => `- ${l.user_name} on leave ${l.date} (${l.type})`).join('\n');
+                const meetingStr = state.meetings.slice(0, 5).map(m => `- Meeting: ${m.title} on ${m.date}. Summary: ${m.summary}`).join('\n');
+
+                // Company Strategy from PDF
+                const companyStrategy = `
+[FORTAL INTERACTIVE STRATEGY 2026]
+Vision: Build Phygital Sports Ecosystem (From Idea to Reality)
+Goals (8 Achievements):
+1. XR Arena CNX: Open flagship venue in Chiang Mai (Q1-Q2), R&D Office.
+2. FortalOS: Launch Platform Blackbox MiniPC Package Solution.
+3. 5 Official Games: Release 4 sports games + 1 team game (Q1-Q4).
+4. Partner Network: Expand dev partners & global marketplaces.
+5. Global Community: Join World Phygital Community, go to Dubai (Q4).
+6. Tournament: Kid & Open League (CNX-BKK), Prize Pool 100k.
+7. On Tour: Roadshow to 2+ provinces (Phuket, Khon Kaen, etc.).
+8. B2B Business: Corporate Team Building & Private Events.
+Financial Target: ~24M THB Revenue.
+                `;
+
+                return `
+Current Date: ${today}
+Current User: ${currentUser}
+
+${companyStrategy}
+
+[TEAM MEMBERS]
+${teamStr}
+
+[TASKS]
+${taskStr}
+
+[UPCOMING LEAVES]
+${leaveStr}
+
+[RECENT MEETINGS]
+${meetingStr}
+                `;
+            },
+
+            sendChatMessage: async (message) => {
+                app.addChatMessage(message, true);
+                app.showTyping();
+
+                try {
+                    const contextData = await app.getSystemContext();
+                    
+                    const prompt = `
+You are 'Skynet', a friendly and witty AI Agent for 'Fortal Interactive'.
+Your personality: Casual, concise, helpful, and fun. Like a smart colleague sitting next desk.
+Language: Thai (ภาษาไทย).
+
+INSTRUCTIONS:
+1. **Be Concise:** Keep answers short and to the point. No long paragraphs unless necessary.
+2. **General Chat:** You can chat about ANYTHING (weather, food, jokes, life), not just work.
+3. **Work Knowledge:** Use the provided [CONTEXT DATA] to answer work-related questions accurately.
+4. **No Greetings:** Do not start with "Hello" or "Sawaddee" every time. Just answer.
+5. **ACTION DETECTION:** - If the user wants to take a leave (sick leave, vacation, personal leave), respond with a specific JSON COMMAND block ONLY.
+   - Default leave type if not specified: 'Sick' (ลาป่วย).
+   - Default date if not specified: 'Tomorrow' (calculate based on Current Date).
+   - Default reason if not specified: '-'.
+   - Format: \`\`\`json{"action": "LEAVE", "data": {"type": "Sick/Personal/Vacation", "date": "YYYY-MM-DD", "reason": "..."}}\`\`\`
+   - Do NOT output any other text if it's a command.
+
+[CONTEXT DATA]
+${contextData}
+
+USER: ${message}
+SKYNET:
+                    `;
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }]
+                        })
+                    });
+
+                    const data = await response.json();
+                    
+                    // Check if there's an error in the response
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    const aiText = data.candidates[0].content.parts[0].text;
+                    
+                    app.hideTyping();
+
+                    // Check for Command Block
+                    const commandMatch = aiText.match(/```json\s*(\{.*?\})\s*```/s);
+                    if (commandMatch) {
+                        try {
+                            const command = JSON.parse(commandMatch[1]);
+                            if (command.action === 'LEAVE') {
+                                app.executeAgentCommand(command);
+                                return;
+                            }
+                        } catch (e) {
+                            console.error("Agent Parse Error", e);
+                        }
+                    }
+
+                    // Normal Chat
+                    app.addChatMessage(aiText);
+
+                } catch (err) {
+                    console.error("Chatbot Error:", err);
+                    app.hideTyping();
+                    // Show specific error if possible to help debug
+                    if (err.message.includes('User location is not supported')) {
+                         app.addChatMessage("ขออภัยครับ พื้นที่ของคุณยังไม่รองรับการใช้งาน AI ในขณะนี้ (Region restriction) 😥");
+                    } else {
+                         app.addChatMessage("ระบบขัดข้องชั่วคราวครับ (อาจเกิดจาก API Key หรือการเชื่อมต่อ) ลองใหม่อีกครั้งนะครับ 🤖❌");
+                    }
+                }
+            },
+            
+            executeAgentCommand: async (cmd) => {
+                if (cmd.action === 'LEAVE') {
+                    const { type, date, reason } = cmd.data;
+                    
+                    // Confirm with user (simulated via chat message first)
+                    app.addChatMessage(`โอเคครับ ผมกำลังทำเรื่อง **${type}** ให้สำหรับวันที่ **${formatDate(date)}** เหตุผล: ${reason || '-'} ...กำลังบันทึกข้อมูลครับ 💾`);
+
+                    try {
+                        const { error } = await db.from('leaves').insert({
+                            user_id: state.user.id,
+                            user_name: state.profile.name,
+                            type: type, 
+                            date: date, 
+                            reason: reason, 
+                            status: 'Pending'
+                        });
+                        
+                        if (error) throw error;
+
+                        setTimeout(() => {
+                            app.addChatMessage(`✅ เรียบร้อย! บันทึกใบลาให้แล้วครับ พักผ่อนให้เต็มที่นะ!`);
+                            app.loadLeaves(); // Refresh UI
+                        }, 1000);
+
+                    } catch (err) {
+                        app.addChatMessage(`❌ เกิดข้อผิดพลาด: ${err.message}`);
+                    }
+                }
+            },
 
             // ADMIN CONSOLE
             loadAdmin: async () => {
@@ -1326,6 +1696,28 @@
                         </tr>
                     `).join('');
                 }
+
+                // Requests
+                const { data: requests } = await db.from('attendance_requests').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
+                const requestList = getEl('admin-request-list');
+                if(requests.length === 0) {
+                    requestList.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่มีรายการคำชี้แจงใหม่</td></tr>';
+                } else {
+                    requestList.innerHTML = requests.map(r => `
+                        <tr>
+                            <td class="p-4 font-medium">${r.user_name}</td>
+                            <td class="p-4">${formatDate(r.date)}</td>
+                            <td class="p-4 text-xs text-slate-500 max-w-xs truncate">${r.reason}</td>
+                            <td class="p-4 text-xs text-indigo-500">${r.image_url ? '<a href="#" class="underline">ดูรูป</a>' : '-'}</td>
+                            <td class="p-4"><span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Pending</span></td>
+                            <td class="p-4 text-right flex gap-2 justify-end">
+                                <button onclick="app.updateRequest('${r.id}', 'Approved')" class="text-green-600 hover:bg-green-50 p-1 rounded"><i data-lucide="check" width="16"></i></button>
+                                <button onclick="app.updateRequest('${r.id}', 'Rejected')" class="text-red-600 hover:bg-red-50 p-1 rounded"><i data-lucide="x" width="16"></i></button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                
                 lucide.createIcons();
             },
             showAdminTab: (tabName) => {
@@ -1347,6 +1739,10 @@
             },
             updateLeave: async (id, status) => {
                 await db.from('leaves').update({ status }).eq('id', id);
+                app.loadAdmin();
+            },
+            updateRequest: async (id, status) => {
+                await db.from('attendance_requests').update({ status }).eq('id', id);
                 app.loadAdmin();
             },
 
@@ -1777,69 +2173,12 @@
             handleCheckIn: async () => {
                 const todayStr = new Date().toISOString().split('T')[0];
                 const timeStr = new Date().toLocaleTimeString('th-TH');
-                
-                // Logic for Late Check-in (09:30)
-                const now = new Date();
-                const workStart = new Date();
-                workStart.setHours(9, 30, 0, 0); // 09:30
-                
-                let status = 'On Time';
-                let alertMsg = '✅ ลงเวลาเข้างานเรียบร้อย (ตรงเวลา)';
-                
-                if(now > workStart) {
-                    const diffMs = now - workStart;
-                    const diffMins = Math.floor(diffMs / 60000);
-                    const hours = Math.floor(diffMins / 60);
-                    const mins = diffMins % 60;
-                    
-                    status = 'Late';
-                    let lateText = `${mins} นาที`;
-                    if(hours > 0) lateText = `${hours} ชั่วโมง ${mins} นาที`;
-                    
-                    alertMsg = `⚠️ ลงเวลาเข้างานเรียบร้อย\n❗ คุณมาสาย ${lateText}`;
-                }
-
-                await db.from('attendance').insert({
-                    user_id: state.user.id,
-                    user_name: state.profile.name,
-                    date: todayStr,
-                    check_in: timeStr,
-                    status: status,
-                    location: state.location
-                });
-                
-                alert(alertMsg);
+                await db.from('attendance').insert({ user_id: state.user.id, user_name: state.profile.name, date: todayStr, check_in: timeStr, status: 'Present', location: state.location });
                 app.loadCheckin();
             },
             handleCheckOut: async () => {
-                const now = new Date();
-                const leaveStart = new Date();
-                leaveStart.setHours(17, 30, 0, 0); // 17:30
-                
-                let confirmMsg = 'ยืนยันลงเวลาออกงาน?';
-                if(now < leaveStart) {
-                     confirmMsg = '⚠️ ยังไม่ถึงเวลาเลิกงาน (17:30 น.)\nยืนยันจะลงเวลาออกก่อนกำหนดหรือไม่?';
-                }
-                
-                if(!confirm(confirmMsg)) return;
-                
-                // FIX: ใช้ข้อมูลจาก state.attendance หรือ state.todayAttendance ก็ได้ (กัน Error)
-                const record = state.attendance || state.todayAttendance;
-
-                if (!record || !record.id) {
-                    alert('❌ ไม่พบข้อมูลการเข้างาน กรุณารีเฟรชหน้าจอแล้วลองใหม่');
-                    return;
-                }
-
-                const timeStr = now.toLocaleTimeString('th-TH');
-                await db.from('attendance').update({ check_out: timeStr }).eq('id', record.id);
-                
-                alert('✅ ลงเวลาออกงานเรียบร้อย');
-                
-                // อัปเดตข้อมูลในตัวแปรทันที ไม่ต้องรอโหลดใหม่
-                if (state.attendance) state.attendance.check_out = timeStr;
-                if (state.todayAttendance) state.todayAttendance.check_out = timeStr;
-
+                const timeStr = new Date().toLocaleTimeString('th-TH');
+                await db.from('attendance').update({ check_out: timeStr }).eq('id', state.attendance.id);
                 app.loadCheckin();
             },
             downloadCSV: () => { /* Same CSV Logic */ },
@@ -1907,6 +2246,16 @@
 
         // Add Event Form Listener
         getEl('add-event-form').addEventListener('submit', (e) => { e.preventDefault(); app.saveEvent(); });
+
+        // Chat Form Listener
+        getEl('chat-form').addEventListener('submit', (e) => { 
+            e.preventDefault();
+            const input = getEl('chat-input');
+            if (input.value.trim()) {
+                app.sendChatMessage(input.value.trim());
+                input.value = '';
+            }
+        });
 
         getEl('menu-btn').addEventListener('click', () => { getEl('sidebar').classList.remove('-translate-x-full'); show('sidebar-overlay'); });
         getEl('sidebar-overlay').addEventListener('click', () => { getEl('sidebar').classList.add('-translate-x-full'); hide('sidebar-overlay'); });
