@@ -1022,7 +1022,28 @@
             location: null,
             currentMonth: new Date(),
             todayAttendance: null,
-            calendarEvents: []
+            calendarEvents: [
+                // Holidays 2026 (Default)
+                { date: '2026-01-01', title: 'วันขึ้นปีใหม่', type: 'holiday' },
+                { date: '2026-03-03', title: 'วันมาฆบูชา (ประมาณ)', type: 'holiday' },
+                { date: '2026-04-06', title: 'วันจักรี', type: 'holiday' },
+                { date: '2026-04-13', title: 'วันสงกรานต์', type: 'holiday' },
+                { date: '2026-04-14', title: 'วันสงกรานต์', type: 'holiday' },
+                { date: '2026-04-15', title: 'วันสงกรานต์', type: 'holiday' },
+                { date: '2026-05-01', title: 'วันแรงงาน', type: 'holiday' },
+                { date: '2026-05-04', title: 'วันฉัตรมงคล', type: 'holiday' },
+                { date: '2026-05-31', title: 'วันวิสาขบูชา (ประมาณ)', type: 'holiday' },
+                { date: '2026-06-03', title: 'วันเฉลิมพระชนมพรรษาพระราชินี', type: 'holiday' },
+                { date: '2026-07-28', title: 'วันเฉลิมพระชนมพรรษา ร.10', type: 'holiday' },
+                { date: '2026-07-30', title: 'วันอาสาฬหบูชา (ประมาณ)', type: 'holiday' },
+                { date: '2026-07-31', title: 'วันเข้าพรรษา (ประมาณ)', type: 'holiday' },
+                { date: '2026-08-12', title: 'วันแม่แห่งชาติ', type: 'holiday' },
+                { date: '2026-10-13', title: 'วันคล้ายวันสวรรคต ร.9', type: 'holiday' },
+                { date: '2026-10-23', title: 'วันปิยมหาราช', type: 'holiday' },
+                { date: '2026-12-05', title: 'วันพ่อแห่งชาติ', type: 'holiday' },
+                { date: '2026-12-10', title: 'วันรัฐธรรมนูญ', type: 'holiday' },
+                { date: '2026-12-31', title: 'วันสิ้นปี', type: 'holiday' }
+            ]
         };
 
         // UTILS
@@ -2262,11 +2283,16 @@ SKYNET:
             loadCalendar: async () => {
                 if(state.leaves.length === 0) await app.loadLeaves();
                 if(state.tasks.length === 0) await app.loadTasks();
-                // Ensure calendar events are loaded
-                if(state.calendarEvents.length === 0) {
-                    const { data } = await db.from('calendar_events').select('*');
-                    state.calendarEvents = data || [];
+                
+                // Fetch calendar events from DB and merge with default holidays
+                const { data } = await db.from('calendar_events').select('*');
+                if (data && data.length > 0) {
+                    // Combine DB events with default holidays (avoiding duplicates if logic needed, simple concat here)
+                    const dbEvents = data.map(e => ({...e, fromDb: true}));
+                    // Keep default holidays but allow DB to override/add
+                    state.calendarEvents = [...state.calendarEvents.filter(e => !e.fromDb), ...dbEvents]; 
                 }
+                
                 app.renderCalendar();
             },
             changeMonth: (delta) => {
