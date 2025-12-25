@@ -729,27 +729,10 @@
                 <!-- Leave Page (NEW) -->
                 <div id="page-leave" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">☕ ขอลาหยุด</h2>
-                    <div class="flex justify-between items-center mb-6">
-                         <!-- Leave Summary Cards here -->
-                    </div>
                     
-                    <!-- Leave Summary Cards -->
-                    <div class="grid grid-cols-3 gap-4 mb-6">
-                        <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 text-center">
-                            <p class="text-xs text-indigo-400 font-bold uppercase tracking-wider">โควตาทั้งหมด</p>
-                            <p class="text-2xl font-bold text-indigo-600" id="leave-quota-total">0</p>
-                            <p class="text-xs text-indigo-400">วัน/ปี</p>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">ใช้ไปแล้ว</p>
-                            <p class="text-2xl font-bold text-slate-600" id="leave-quota-used">0</p>
-                            <p class="text-xs text-slate-400">วัน</p>
-                        </div>
-                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center">
-                            <p class="text-xs text-emerald-400 font-bold uppercase tracking-wider">คงเหลือ</p>
-                            <p class="text-2xl font-bold text-emerald-600" id="leave-quota-remaining">0</p>
-                            <p class="text-xs text-emerald-400">วัน</p>
-                        </div>
+                    <!-- Leave Summary Cards (Dynamic Content via JS) -->
+                    <div id="leave-summary-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        <div class="col-span-3 text-center py-4"><div class="loader loader-dark"></div></div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -757,12 +740,22 @@
                             <h3 class="font-bold mb-4">แบบฟอร์มการลา</h3>
                             <form id="leave-form" class="space-y-4">
                                 <div>
-                                    <label class="text-xs font-bold text-slate-500 uppercase">ประเภท</label>
-                                    <select id="leave-type" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
-                                        <option value="Sick">ลาป่วย</option>
-                                        <option value="Personal">ลากิจ</option>
-                                        <option value="Vacation">ลาพักร้อน</option>
-                                        <option value="Other">อื่นๆ</option>
+                                    <label class="text-xs font-bold text-slate-500 uppercase">ประเภทการลา</label>
+                                    <select id="leave-type" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-sm">
+                                        <optgroup label="การลาทั่วไป">
+                                            <option value="Sick">😷 ลาป่วย (30 วัน/ปี)</option>
+                                            <option value="Personal">📝 ลากิจทั่วไป (6 วัน/ปี)</option>
+                                            <option value="Vacation">🏖️ ลาพักร้อน (ตามอายุงาน)</option>
+                                        </optgroup>
+                                        <optgroup label="การลาพิเศษ">
+                                            <option value="Marriage">💍 ลาสมรส (5 วัน)</option>
+                                            <option value="Compassionate">⚫ ลาจัดการงานศพ (5 วัน)</option>
+                                            <option value="Ordination">🙏 ลาอุปสมบท/พิธีศาสนา (15 วัน)</option>
+                                            <option value="Maternity">👶 ลาคลอด (90 วัน)</option>
+                                            <option value="Sterilization">🏥 ลาทำหมัน (ตามแพทย์สั่ง)</option>
+                                            <option value="Training">📚 ลาฝึกอบรม</option>
+                                            <option value="Military">🪖 ลาเกณฑ์ทหาร</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div>
@@ -771,20 +764,19 @@
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">เหตุผล</label>
-                                    <textarea id="leave-reason" placeholder="โปรดระบุ..." class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                                    <textarea id="leave-reason" placeholder="โปรดระบุรายละเอียด..." class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
                                 </div>
                                 <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งใบลา</button>
                             </form>
                         </div>
                         <div class="md:col-span-2">
-                            <h3 class="font-bold mb-4 ml-1">ประวัติการลา</h3>
+                            <h3 class="font-bold mb-4 ml-1">ประวัติการลาของฉัน</h3>
                             <div id="leave-list" class="space-y-3">
                                 <!-- JS loads here -->
                             </div>
                         </div>
                     </div>
                 </div>
-
 
                 <!-- Admin Console (NEW) -->
                 <div id="page-admin" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
@@ -1723,11 +1715,32 @@ Goals (8 Achievements):
 Financial Target: ~24M THB Revenue.
                 `;
 
+                // Leave Policy
+                const leavePolicy = `
+[LEAVE POLICY / กฎระเบียบการลา]
+1. ลากิจ (Personal Leave):
+   - ลากิจทั่วไป: 6 วัน/ปี (ต้องแจ้งล่วงหน้าอย่างน้อย 2 วัน)
+   - ลากิจพิเศษ (สมรส): 5 วัน (ลาได้ครั้งเดียวตลอดอายุงาน)
+   - ลากิจพิเศษ (งานศพ): 5 วัน (บุคคลในครอบครัว)
+   - ลาอุปสมบท/พิธีทางศาสนา: 15 วัน (อายุงาน 2 ปีขึ้นไป, ลาได้ครั้งเดียว)
+2. ลาป่วย (Sick Leave):
+   - ลาได้ตามจริง (ได้รับค่าจ้างไม่เกิน 30 วันทำงาน/ปี)
+   - ลาป่วยติดต่อกัน 3 วันขึ้นไป ต้องมีใบรับรองแพทย์
+3. ลาคลอด (Maternity Leave):
+   - ไม่เกิน 90 วัน (นับรวมวันหยุด)
+4. ลาทำหมัน (Sterilization Leave):
+   - ตามระยะเวลาในใบรับรองแพทย์
+5. ลาฝึกอบรม (Training Leave):
+   - ตามความเหมาะสมเพื่อพัฒนาความรู้ความสามารถ
+                `;
+
                 return `
 Current Date: ${today}
 Current User: ${currentUser}
 
 ${companyStrategy}
+
+${leavePolicy}
 
 [TEAM MEMBERS]
 ${teamStr}
@@ -2117,60 +2130,96 @@ SKYNET:
                 const { data } = await db.from('leaves').select('*').order('date', { ascending: false });
                 state.leaves = data || [];
                 
-                // --- START FIX: Calculate & Display Leave Quota ---
-                const totalQuota = state.profile.leave_quota || 15; // Default quota
+                // 1. Calculate Quotas & Usage
                 const myApprovedLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
-                const usedLeaves = myApprovedLeaves.length;
-                const remaining = totalQuota - usedLeaves;
-
-                // Update UI Elements
-                const elTotal = getEl('leave-quota-total');
-                if(elTotal) elTotal.innerText = totalQuota;
                 
-                const elUsed = getEl('leave-quota-used');
-                if(elUsed) elUsed.innerText = usedLeaves;
+                // Count usage by type
+                const usage = {
+                    Sick: 0,
+                    Personal: 0,
+                    Vacation: 0
+                };
+                
+                myApprovedLeaves.forEach(l => {
+                    // Map subtypes if needed, but basic types match values
+                    if (usage[l.type] !== undefined) usage[l.type]++;
+                });
 
-                const elRemaining = getEl('leave-quota-remaining');
-                if(elRemaining) {
-                    elRemaining.innerText = remaining;
-                    // Change text color if quota exceeded
-                    if(remaining <= 0) {
-                        elRemaining.classList.remove('text-emerald-600');
-                        elRemaining.classList.add('text-red-600');
-                    } else {
-                        elRemaining.classList.remove('text-red-600');
-                        elRemaining.classList.add('text-emerald-600');
-                    }
-                }
-                // --- END FIX ---
+                // Get Quotas
+                const quotaVacation = state.profile.leave_quota || 6; // Default 6 if not set by admin
+                const quotaPersonal = 6; // Fixed per policy
+                const quotaSick = 30; // Fixed per policy
 
-                // Filter to show ONLY current user's leaves in the list
+                // 2. Render Summary Cards
+                const summaryContainer = getEl('leave-summary-container');
+                summaryContainer.innerHTML = `
+                    <!-- Vacation Card -->
+                    <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 text-center relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="palmtree" width="40" height="40"></i></div>
+                        <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider">ลาพักร้อน</p>
+                        <p class="text-3xl font-bold text-indigo-700 mt-1">${quotaVacation - usage.Vacation}<span class="text-sm text-indigo-400 font-normal">/${quotaVacation}</span></p>
+                        <p class="text-[10px] text-indigo-400 mt-1">วันคงเหลือ</p>
+                    </div>
+
+                    <!-- Personal Leave Card -->
+                    <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="briefcase" width="40" height="40"></i></div>
+                        <p class="text-xs text-orange-500 font-bold uppercase tracking-wider">ลากิจทั่วไป</p>
+                        <p class="text-3xl font-bold text-orange-700 mt-1">${quotaPersonal - usage.Personal}<span class="text-sm text-orange-400 font-normal">/${quotaPersonal}</span></p>
+                        <p class="text-[10px] text-orange-400 mt-1">วันคงเหลือ</p>
+                    </div>
+
+                    <!-- Sick Leave Card -->
+                    <div class="bg-red-50 p-4 rounded-2xl border border-red-100 text-center relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="thermometer" width="40" height="40"></i></div>
+                        <p class="text-xs text-red-500 font-bold uppercase tracking-wider">ลาป่วย</p>
+                        <p class="text-3xl font-bold text-red-700 mt-1">${quotaSick - usage.Sick}<span class="text-sm text-red-400 font-normal">/${quotaSick}</span></p>
+                        <p class="text-[10px] text-red-400 mt-1">วันคงเหลือ</p>
+                    </div>
+                `;
+
+                // 3. Render List (Only My Leaves)
                 const myLeavesHistory = state.leaves.filter(l => l.user_id === state.user.id);
                 const list = getEl('leave-list');
                 
                 if (myLeavesHistory.length === 0) {
-                    list.innerHTML = `<div class="text-center p-8 text-slate-400 font-light">ไม่มีประวัติการลา</div>`;
+                    list.innerHTML = `<div class="text-center p-8 text-slate-400 font-light border-2 border-dashed border-slate-100 rounded-2xl">ไม่มีประวัติการลา</div>`;
                 } else {
                     list.innerHTML = myLeavesHistory.map(l => {
                         let statusColor = 'bg-slate-100 text-slate-500';
-                        if(l.status === 'Approved') statusColor = 'bg-green-100 text-green-700';
-                        if(l.status === 'Rejected') statusColor = 'bg-red-100 text-red-700';
-                        if(l.status === 'Pending') statusColor = 'bg-yellow-100 text-yellow-700';
+                        let icon = 'clock';
+                        if(l.status === 'Approved') { statusColor = 'bg-green-100 text-green-700'; icon = 'check-circle'; }
+                        if(l.status === 'Rejected') { statusColor = 'bg-red-100 text-red-700'; icon = 'x-circle'; }
+                        if(l.status === 'Pending') { statusColor = 'bg-yellow-100 text-yellow-700'; icon = 'clock'; }
+
+                        // Map Type to Thai Label (Simple mapping)
+                        const typeMap = {
+                            'Sick': 'ลาป่วย', 'Personal': 'ลากิจ', 'Vacation': 'พักร้อน',
+                            'Marriage': 'ลาสมรส', 'Compassionate': 'งานศพ', 'Ordination': 'ลาบวช',
+                            'Maternity': 'ลาคลอด', 'Sterilization': 'ทำหมัน', 'Training': 'ฝึกอบรม', 'Military': 'เกณฑ์ทหาร', 'Other': 'อื่นๆ'
+                        };
+                        const typeLabel = typeMap[l.type] || l.type;
 
                         return `
-                        <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:shadow-sm transition-shadow">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center font-bold text-xs">${l.type.charAt(0)}</div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center hover:shadow-md transition-all hover:-translate-y-0.5">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center font-bold text-xs">
+                                    ${l.type.charAt(0)}
+                                </div>
                                 <div>
-                                    <p class="font-bold text-sm text-slate-800">${l.type} <span class="font-normal text-slate-400 text-xs">(${formatDate(l.date)})</span></p>
-                                    <p class="text-xs text-slate-500">${l.reason || '-'}</p>
+                                    <p class="font-bold text-sm text-slate-800">${typeLabel} <span class="font-normal text-slate-400 text-xs">(${formatDate(l.date)})</span></p>
+                                    <p class="text-xs text-slate-500 line-clamp-1">${l.reason || '-'}</p>
                                 </div>
                             </div>
-                            <span class="px-2 py-1 rounded text-[10px] font-bold ${statusColor}">${l.status}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold ${statusColor} flex items-center gap-1">
+                                <i data-lucide="${icon}" width="12"></i> ${l.status}
+                            </span>
                         </div>
                     `}).join('');
                 }
+                lucide.createIcons();
             },
+
             submitLeave: async () => {
                 const type = getEl('leave-type').value;
                 const date = getEl('leave-date').value;
@@ -2179,12 +2228,20 @@ SKYNET:
                 if(!date) return alert('กรุณาเลือกวันที่');
 
                 // Check Quota before submitting
-                const myLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
-                const used = myLeaves.length;
-                const quota = state.profile.leave_quota || 15;
+                const myApprovedLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved' && l.type === type);
+                const used = myApprovedLeaves.length;
+                
+                let quota = 999; // Default infinite for special leaves
+                let typeName = type;
+
+                if (type === 'Sick') { quota = 30; typeName = 'ลาป่วย'; }
+                else if (type === 'Personal') { quota = 6; typeName = 'ลากิจ'; }
+                else if (type === 'Vacation') { quota = state.profile.leave_quota || 6; typeName = 'ลาพักร้อน'; }
+                else if (type === 'Marriage' || type === 'Compassionate') { quota = 5; }
+                else if (type === 'Ordination') { quota = 15; }
                 
                 if (used >= quota) {
-                    return alert(`คุณใช้วันลาครบโควตาแล้ว (${quota} วัน) ไม่สามารถลาเพิ่มได้`);
+                    return alert(`คุณใช้สิทธิ์ "${typeName}" ครบโควตาแล้ว (${quota} วัน) ไม่สามารถลาเพิ่มได้`);
                 }
 
                 const { error } = await db.from('leaves').insert({
@@ -2195,7 +2252,7 @@ SKYNET:
                 
                 if(error) alert(error.message);
                 else {
-                    alert('ส่งใบลาเรียบร้อย');
+                    alert('ส่งใบลาเรียบร้อย รอหัวหน้าอนุมัติครับ');
                     getEl('leave-form').reset();
                     app.loadLeaves();
                 }
