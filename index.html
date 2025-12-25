@@ -489,7 +489,7 @@
                             
                             <div class="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-400 text-center">
                                 <i data-lucide="info" width="12" class="inline mr-1 align-text-top"></i>
-                                ต้องอยู่ภายในระยะ 50 เมตร เพื่อเช็คอิน
+                                ต้องอยู่ภายในระยะ 1500 เมตร เพื่อเช็คอิน
                             </div>
                         </div>
                     </div>
@@ -658,7 +658,7 @@
         const SUPABASE_URL = 'https://panomchvlqjimwgsxevz.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbm9tY2h2bHFqaW13Z3N4ZXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1Njk3OTgsImV4cCI6MjA4MjE0NTc5OH0.YdXBlUOlLape0jBdbGgt01wZL-1Es9hQDiGkmZI2zxI';
         const OFFICE_LOCATION = { lat: 18.7225, lng: 99.0255 };
-        const MAX_DIST = 50; // ปรับลดระยะเหลือ 50 เมตร
+        const MAX_DIST = 1500; // ปรับลดระยะเหลือ 50 เมตร
         const ADMIN_EMAIL = 'poomie@live.com'; // Hardcoded Admin
 
         const { createClient } = supabase;
@@ -837,6 +837,9 @@
 
                 const elPending = getEl('dash-pending-tasks');
                 if(elPending) elPending.innerText = myTasks.filter(t => t.status !== 'Done').length;
+
+                const elRole = getEl('dash-role');
+                if(elRole) elRole.innerText = state.profile.role;
 
                 const elDate = getEl('current-date');
                 if(elDate) elDate.innerText = formatDate(new Date());
