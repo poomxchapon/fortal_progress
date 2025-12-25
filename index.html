@@ -2162,6 +2162,53 @@ SKYNET:
             },
 
             // LEAVES
+            // Helper to calculate working days/hours
+            calculateDuration: (startDate, endDate, startTime, endTime) => {
+                const start = new Date(`${startDate}T${startTime}`);
+                const end = new Date(`${endDate}T${endTime}`);
+                
+                if (start >= end) return 0;
+
+                // Simple logic for same day
+                if (startDate === endDate) {
+                    let diffMs = end - start;
+                    let diffHrs = diffMs / (1000 * 60 * 60);
+
+                    // หักเวลาพักเที่ยง 1 ชม. ถ้าช่วงเวลาลา ครอบคลุมเที่ยง (12:00 - 13:00)
+                    // สมมติพัก 12:00 - 13:00
+                    const lunchStart = new Date(`${startDate}T12:00`);
+                    const lunchEnd = new Date(`${startDate}T13:00`);
+                    
+                    // กรณีลาคร่อมช่วงพักเที่ยง ให้หักออก 1 ชม.
+                    if (start < lunchEnd && end > lunchStart) {
+                        // คำนวณส่วนที่ซ้อนทับกับเวลาพัก
+                        const overlapStart = start < lunchStart ? lunchStart : start;
+                        const overlapEnd = end > lunchEnd ? lunchEnd : end;
+                        const overlapMs = overlapEnd - overlapStart;
+                        const overlapHrs = overlapMs / (1000 * 60 * 60);
+                        
+                        diffHrs -= overlapHrs;
+                    }
+
+                    // สูตรคำนวณ: จำนวนชั่วโมงทำงาน / 8
+                    let days = diffHrs / 8;
+                    
+                    // ปัดเศษให้สวยงาม (เช่น 3.99 ชม -> 0.5 วัน)
+                    // ถ้าลา >= 4 ชม. แต่น้อยกว่า 8 ให้เป็น 0.5 (ครึ่งวัน) หรือตามจริง
+                    // ตาม Requirement: "ลาครึ่งวัน ลด 0.5" -> 4 ชม. = 0.5 วัน
+                    
+                    return parseFloat(days.toFixed(2));
+                } else {
+                    // Multi-day: นับตามวันไปก่อนสำหรับเวอร์ชันนี้ (เพื่อความง่าย)
+                    // หรือจะคำนวณละเอียดก็ได้ แต่ในที่นี้ขอใช้แบบนับวันหัวท้ายเต็มวัน - หรือใช้สูตรเดิม
+                    const oneDay = 24 * 60 * 60 * 1000;
+                    const sDay = new Date(startDate);
+                    const eDay = new Date(endDate);
+                    const dayDiff = Math.round(Math.abs((eDay - sDay) / oneDay));
+                    return dayDiff + 1; 
+                }
+            },
+
             loadLeaves: async () => {
                 const { data } = await db.from('leaves').select('*').order('date', { ascending: false });
                 state.leaves = data || [];
@@ -2169,8 +2216,6 @@ SKYNET:
                 // 1. Calculate Quotas & Usage
                 const myApprovedLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
                 
-                // Count usage by type (This logic counts "records", not actual days. 
-                // Ideally, we should calculate days diff. For now, keeping it simple or assuming 1 record ~ 1 day/period usage)
                 const usage = {
                     Sick: 0,
                     Personal: 0,
@@ -2178,17 +2223,15 @@ SKYNET:
                 };
                 
                 myApprovedLeaves.forEach(l => {
+                    // ใช้ฟังก์ชันคำนวณวัน
+                    let days = app.calculateDuration(
+                        l.date, 
+                        l.end_date || l.date, 
+                        l.start_time || '09:30', 
+                        l.end_time || '18:30'
+                    );
+                    
                     if (usage[l.type] !== undefined) {
-                        // Advanced: Calculate day difference if needed. For now, increment count.
-                        // To be precise: (end_date - date) in days. 
-                        // Let's implement a simple day diff check
-                        let days = 1;
-                        if(l.end_date && l.date) {
-                            const start = new Date(l.date);
-                            const end = new Date(l.end_date);
-                            const diffTime = Math.abs(end - start);
-                            days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
-                        }
                         usage[l.type] += days;
                     }
                 });
@@ -2200,12 +2243,16 @@ SKYNET:
 
                 // 2. Render Summary Cards
                 const summaryContainer = getEl('leave-summary-container');
+                
+                // Helper to format number
+                const fmt = (n) => Number(n).toFixed(2).replace('.00', '');
+
                 summaryContainer.innerHTML = `
                     <!-- Vacation Card -->
                     <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 text-center relative overflow-hidden group">
                         <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="palmtree" width="40" height="40"></i></div>
                         <p class="text-xs text-indigo-500 font-bold uppercase tracking-wider">ลาพักร้อน</p>
-                        <p class="text-3xl font-bold text-indigo-700 mt-1">${Math.max(0, quotaVacation - usage.Vacation)}<span class="text-sm text-indigo-400 font-normal">/${quotaVacation}</span></p>
+                        <p class="text-3xl font-bold text-indigo-700 mt-1">${fmt(Math.max(0, quotaVacation - usage.Vacation))}<span class="text-sm text-indigo-400 font-normal">/${quotaVacation}</span></p>
                         <p class="text-[10px] text-indigo-400 mt-1">วันคงเหลือ</p>
                     </div>
 
@@ -2213,7 +2260,7 @@ SKYNET:
                     <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center relative overflow-hidden group">
                         <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="briefcase" width="40" height="40"></i></div>
                         <p class="text-xs text-orange-500 font-bold uppercase tracking-wider">ลากิจทั่วไป</p>
-                        <p class="text-3xl font-bold text-orange-700 mt-1">${Math.max(0, quotaPersonal - usage.Personal)}<span class="text-sm text-orange-400 font-normal">/${quotaPersonal}</span></p>
+                        <p class="text-3xl font-bold text-orange-700 mt-1">${fmt(Math.max(0, quotaPersonal - usage.Personal))}<span class="text-sm text-orange-400 font-normal">/${quotaPersonal}</span></p>
                         <p class="text-[10px] text-orange-400 mt-1">วันคงเหลือ</p>
                     </div>
 
@@ -2221,7 +2268,7 @@ SKYNET:
                     <div class="bg-red-50 p-4 rounded-2xl border border-red-100 text-center relative overflow-hidden group">
                         <div class="absolute top-0 right-0 p-2 opacity-10"><i data-lucide="thermometer" width="40" height="40"></i></div>
                         <p class="text-xs text-red-500 font-bold uppercase tracking-wider">ลาป่วย</p>
-                        <p class="text-3xl font-bold text-red-700 mt-1">${Math.max(0, quotaSick - usage.Sick)}<span class="text-sm text-red-400 font-normal">/${quotaSick}</span></p>
+                        <p class="text-3xl font-bold text-red-700 mt-1">${fmt(Math.max(0, quotaSick - usage.Sick))}<span class="text-sm text-red-400 font-normal">/${quotaSick}</span></p>
                         <p class="text-[10px] text-red-400 mt-1">วันคงเหลือ</p>
                     </div>
                 `;
@@ -2247,19 +2294,22 @@ SKYNET:
                         };
                         const typeLabel = typeMap[l.type] || l.type;
                         
-                        // Date Range Display
                         let dateDisplay = formatDate(l.date);
                         if (l.end_date && l.end_date !== l.date) {
                             dateDisplay += ` - ${formatDate(l.end_date)}`;
                         }
                         
-                        // Time Display (Show if specific time, e.g., not default full day)
                         let timeDisplay = "";
                         if (l.start_time && l.end_time) {
                              const s = l.start_time.slice(0,5);
                              const e = l.end_time.slice(0,5);
-                             if (s !== '09:30' || e !== '18:30') { // Show only if non-standard
-                                 timeDisplay = `<span class="text-[10px] bg-slate-100 px-1 rounded ml-1 text-slate-500">${s}-${e}</span>`;
+                             // คำนวณวันโชว์ใน List ด้วย
+                             const days = app.calculateDuration(l.date, l.end_date || l.date, l.start_time, l.end_time);
+                             
+                             if (s !== '09:30' || e !== '18:30') { 
+                                 timeDisplay = `<span class="text-[10px] bg-slate-100 px-1 rounded ml-1 text-slate-500">${s}-${e} (${days} วัน)</span>`;
+                             } else {
+                                 timeDisplay = `<span class="text-[10px] bg-slate-50 px-1 rounded ml-1 text-slate-400">(${days} วัน)</span>`;
                              }
                         }
 
@@ -2294,21 +2344,16 @@ SKYNET:
                 if(!startDate || !endDate) return alert('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด');
                 if(new Date(startDate) > new Date(endDate)) return alert('วันที่เริ่มต้นต้องมาก่อนวันที่สิ้นสุด');
 
-                // Calculate Days Requesting
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                const diffTime = Math.abs(end - start);
-                const requestingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+                // คำนวณวันที่จะขอลารอบนี้
+                const requestingDays = app.calculateDuration(startDate, endDate, startTime, endTime);
+                
+                if (requestingDays <= 0) return alert('ช่วงเวลาไม่ถูกต้อง (0 วัน)');
 
                 // Check Quota
                 const myApprovedLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved' && l.type === type);
                 let usedDays = 0;
                 myApprovedLeaves.forEach(l => {
-                    let d = 1;
-                    if(l.end_date && l.date) {
-                         d = Math.ceil(Math.abs(new Date(l.end_date) - new Date(l.date)) / (1000 * 60 * 60 * 24)) + 1;
-                    }
-                    usedDays += d;
+                    usedDays += app.calculateDuration(l.date, l.end_date || l.date, l.start_time || '09:30', l.end_time || '18:30');
                 });
                 
                 let quota = 999; 
@@ -2319,14 +2364,14 @@ SKYNET:
                 else if (type === 'Vacation') { quota = state.profile.leave_quota || 6; typeName = 'ลาพักร้อน'; }
                 
                 if (usedDays + requestingDays > quota) {
-                    return alert(`สิทธิ์ "${typeName}" ของคุณไม่พอ (เหลือ ${quota - usedDays} วัน, ขอลา ${requestingDays} วัน)`);
+                    return alert(`สิทธิ์ "${typeName}" ของคุณไม่พอ (เหลือ ${Number(quota - usedDays).toFixed(2)} วัน, ขอลา ${requestingDays} วัน)`);
                 }
 
                 const { error } = await db.from('leaves').insert({
                     user_id: state.user.id,
                     user_name: state.profile.name,
                     type, 
-                    date: startDate, // Store start date in 'date' column
+                    date: startDate,
                     end_date: endDate,
                     start_time: startTime,
                     end_time: endTime,
@@ -2336,7 +2381,7 @@ SKYNET:
                 
                 if(error) alert(error.message);
                 else {
-                    alert('ส่งใบลาเรียบร้อย รอหัวหน้าอนุมัติครับ');
+                    alert(`ส่งใบลาเรียบร้อย (${requestingDays} วัน) รอหัวหน้าอนุมัติครับ`);
                     getEl('leave-form').reset();
                     // Set default dates again
                     getEl('leave-start-time').value = "09:30";
