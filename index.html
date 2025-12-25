@@ -35,8 +35,8 @@
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Transitions */
-        .page-transition { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .page-transition { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Calendar Grid */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
@@ -47,12 +47,16 @@
         .city-sky-evening { background: linear-gradient(to bottom, #f59e0b, #fcd34d, #818cf8); }
         .city-sky-night { background: linear-gradient(to bottom, #1e1b4b, #312e81, #4338ca); color: white; }
         
-        .building-pop { animation: popUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: scale(0); transform-origin: bottom; }
+        .building-pop { animation: popUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; opacity: 0; transform: scale(0); transform-origin: bottom; }
         @keyframes popUp { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
 
         /* Hide scrollbar for city container but allow scroll */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Bento Grid Hover Effect */
+        .bento-card { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
+        .bento-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); z-index: 10; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-screen overflow-hidden flex flex-col">
@@ -65,7 +69,10 @@
                     <i data-lucide="briefcase" width="32" height="32"></i>
                 </div>
                 <h2 id="auth-title" class="text-2xl font-bold text-slate-900">ยินดีต้อนรับ</h2>
-                <p class="text-slate-500 mt-2 font-light">WorkSpace HR & PM</p>
+                <div class="mt-2">
+                    <p class="text-slate-700 font-medium text-lg">WorkSpace System</p>
+                    <p class="text-slate-400 text-sm mt-0.5">by <span class="font-semibold text-indigo-600">Fortal Interactive</span></p>
+                </div>
             </div>
 
             <div id="auth-error" class="hidden mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-start gap-3 border border-red-100">
@@ -122,7 +129,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">HR & Project Mgmt</p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive</p>
                     </div>
                 </div>
             </div>
@@ -146,6 +153,10 @@
                 <button onclick="router.navigate('tasks')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-tasks">
                     <i data-lucide="check-square" class="w-5 h-5"></i> งานของฉัน
                 </button>
+                <!-- Google Drive Button -->
+                <a href="https://drive.google.com/drive/folders/1UAH3Yh6doviayDCNmXEh0wQr7vbf0gIO?usp=sharing" target="_blank" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group">
+                    <i data-lucide="hard-drive" class="w-5 h-5"></i> Google Drive
+                </a>
 
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">HR</p>
                 <button onclick="router.navigate('checkin')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-checkin">
@@ -201,8 +212,8 @@
             <!-- Content Area -->
             <div class="flex-1 overflow-auto p-4 sm:p-6 lg:p-10 relative">
                 
-                <!-- Dashboard (Bento Style + Game Widget) -->
-                <div id="page-dashboard" class="page max-w-6xl mx-auto space-y-6 page-transition">
+                <!-- Dashboard (Bento Style + Game Widget + New Panels) -->
+                <div id="page-dashboard" class="page max-w-7xl mx-auto space-y-6 page-transition">
                     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div>
                             <h2 class="text-3xl font-bold text-slate-900 tracking-tight">สวัสดีคุณ <span class="display-name text-indigo-600">User</span> 👋</h2>
@@ -211,35 +222,10 @@
                     </div>
 
                     <!-- Bento Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <!-- Stat 1: Total Tasks -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group hover:shadow-md transition-all">
-                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform"></div>
-                            <div class="relative z-10">
-                                <div class="flex items-center gap-3 mb-2 text-indigo-600">
-                                    <i data-lucide="briefcase" class="w-5 h-5"></i>
-                                    <span class="text-sm font-medium">งานทั้งหมด</span>
-                                </div>
-                                <p class="text-4xl font-bold text-slate-900" id="dash-total-tasks">0</p>
-                            </div>
-                            <p class="text-xs text-slate-400 mt-auto">รายการที่คุณต้องรับผิดชอบ</p>
-                        </div>
-
-                        <!-- Stat 2: Pending -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group hover:shadow-md transition-all">
-                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full group-hover:scale-110 transition-transform"></div>
-                            <div class="relative z-10">
-                                <div class="flex items-center gap-3 mb-2 text-orange-500">
-                                    <i data-lucide="clock" class="w-5 h-5"></i>
-                                    <span class="text-sm font-medium">รอดำเนินการ</span>
-                                </div>
-                                <p class="text-4xl font-bold text-slate-900" id="dash-pending-tasks">0</p>
-                            </div>
-                            <p class="text-xs text-slate-400 mt-auto">งานที่ต้องเร่งจัดการ</p>
-                        </div>
-
-                        <!-- Stat 3: Status -->
-                        <div class="sm:col-span-2 bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-min">
+                        
+                        <!-- Panel: My Status (2x1) -->
+                        <div class="col-span-1 md:col-span-2 bento-card bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <span class="text-indigo-100 text-xs font-medium bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm">My Status</span>
@@ -259,8 +245,62 @@
                             </div>
                         </div>
 
+                        <!-- Panel: Total Tasks (1x1) -->
+                        <div class="bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-3 mb-2 text-indigo-600">
+                                    <i data-lucide="briefcase" class="w-5 h-5"></i>
+                                    <span class="text-sm font-medium">งานทั้งหมด</span>
+                                </div>
+                                <p class="text-4xl font-bold text-slate-900" id="dash-total-tasks">0</p>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-auto">รายการที่คุณต้องรับผิดชอบ</p>
+                        </div>
+
+                        <!-- Panel: Pending (1x1) -->
+                        <div class="bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-3 mb-2 text-orange-500">
+                                    <i data-lucide="clock" class="w-5 h-5"></i>
+                                    <span class="text-sm font-medium">รอดำเนินการ</span>
+                                </div>
+                                <p class="text-4xl font-bold text-slate-900" id="dash-pending-tasks">0</p>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-auto">งานที่ต้องเร่งจัดการ</p>
+                        </div>
+
+                        <!-- Panel: Who's on Leave (2x2) -->
+                        <div class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col relative overflow-hidden min-h-[160px]">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="bg-red-100 p-2 rounded-lg text-red-500"><i data-lucide="coffee" width="18"></i></div>
+                                    <h3 class="font-bold text-slate-800">ใครลาบ้างวันนี้?</h3>
+                                </div>
+                                <span class="text-xs text-slate-400" id="today-date-leave">...</span>
+                            </div>
+                            <div id="dash-leave-list" class="flex-1 flex flex-col justify-center items-center gap-2">
+                                <div class="loader loader-dark"></div>
+                            </div>
+                        </div>
+
+                        <!-- Panel: Urgent Tasks (2x2) -->
+                        <div class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col relative overflow-hidden min-h-[160px]">
+                             <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <div class="bg-amber-100 p-2 rounded-lg text-amber-600"><i data-lucide="flame" width="18"></i></div>
+                                    <h3 class="font-bold text-slate-800">งานด่วนจี๋ (Deadlines)</h3>
+                                </div>
+                                <button onclick="router.navigate('tasks')" class="text-xs text-indigo-600 hover:underline">ดูทั้งหมด</button>
+                            </div>
+                            <div id="dash-deadline-list" class="flex-1 space-y-2 overflow-y-auto max-h-40 pr-2 custom-scrollbar">
+                                <div class="flex justify-center py-4"><div class="loader loader-dark"></div></div>
+                            </div>
+                        </div>
+
                         <!-- Work City Widget (Full Width) -->
-                        <div class="col-span-1 sm:col-span-2 lg:col-span-4 bg-slate-900 rounded-3xl shadow-lg border border-slate-200 h-80 relative overflow-hidden group">
+                        <div class="col-span-1 md:col-span-2 lg:col-span-4 bento-card bg-slate-900 rounded-3xl shadow-lg border border-slate-200 h-80 relative overflow-hidden group">
                             <!-- Game Canvas Background -->
                             <div id="city-sky" class="absolute inset-0 z-0 city-sky-morning transition-colors duration-1000"></div>
                             
@@ -361,9 +401,14 @@
                 <div id="page-tasks" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <div class="flex justify-between items-center">
                         <h2 class="text-2xl font-bold text-slate-800">📋 จัดการงาน (Tasks)</h2>
-                        <button onclick="app.toggleTaskForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
-                            <i data-lucide="plus"></i> สั่งงานใหม่
-                        </button>
+                        <div class="flex gap-2">
+                             <button onclick="app.clearDoneTasks()" class="bg-white text-red-500 border border-red-200 px-4 py-2 rounded-xl font-medium hover:bg-red-50 hover:border-red-300 flex items-center gap-2">
+                                <i data-lucide="trash-2" width="16"></i> ล้างงานเสร็จแล้ว
+                            </button>
+                            <button onclick="app.toggleTaskForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+                                <i data-lucide="plus"></i> สั่งงานใหม่
+                            </button>
+                        </div>
                     </div>
 
                     <div id="task-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
@@ -439,8 +484,13 @@
                         <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
                             <h3 class="font-bold text-slate-800 mb-4">ข้อมูลพิกัด</h3>
                             <div class="space-y-3 text-sm">
-                                <div class="bg-slate-50 p-3 rounded-xl"><p class="text-xs text-slate-400">OFFICE</p><p class="font-mono">13.7563, 100.5018</p></div>
+                                <div class="bg-slate-50 p-3 rounded-xl"><p class="text-xs text-slate-400">OFFICE</p><p class="font-mono">18.7225, 99.0255</p></div>
                                 <div class="bg-indigo-50 p-3 rounded-xl"><p class="text-xs text-indigo-400">YOU</p><p class="font-mono text-indigo-900" id="debug-loc">-</p></div>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-400 text-center">
+                                <i data-lucide="info" width="12" class="inline mr-1 align-text-top"></i>
+                                ต้องอยู่ภายในระยะ 50 เมตร เพื่อเช็คอิน
                             </div>
                         </div>
                     </div>
@@ -608,8 +658,8 @@
         // CONFIG
         const SUPABASE_URL = 'https://panomchvlqjimwgsxevz.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbm9tY2h2bHFqaW13Z3N4ZXZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1Njk3OTgsImV4cCI6MjA4MjE0NTc5OH0.YdXBlUOlLape0jBdbGgt01wZL-1Es9hQDiGkmZI2zxI';
-        const OFFICE_LOCATION = { lat: 13.7563, lng: 100.5018 };
-        const MAX_DIST = 500;
+        const OFFICE_LOCATION = { lat: 18.7225, lng: 99.0255 };
+        const MAX_DIST = 50; // ปรับลดระยะเหลือ 50 เมตร
         const ADMIN_EMAIL = 'poomie@live.com'; // Hardcoded Admin
 
         const { createClient } = supabase;
@@ -773,6 +823,9 @@
                 const { data } = await db.from('tasks').select('*');
                 state.tasks = data || [];
                 
+                const { data: leaves } = await db.from('leaves').select('*').eq('status', 'Approved');
+                state.leaves = leaves || [];
+
                 const myTasks = state.tasks.filter(t => t.assignee === state.profile.name || state.profile.role === 'admin');
                 const doneCount = state.tasks.filter(t => t.status === 'Done').length;
                 const progressCount = state.tasks.filter(t => t.status === 'In Progress').length;
@@ -791,6 +844,60 @@
                 const elDate = getEl('current-date');
                 if(elDate) elDate.innerText = formatDate(new Date());
 
+                // Who's on Leave Today
+                const todayStr = new Date().toISOString().split('T')[0];
+                const todaysLeaves = state.leaves.filter(l => l.date === todayStr);
+                const leaveListEl = getEl('dash-leave-list');
+                if(leaveListEl) {
+                    if(todaysLeaves.length === 0) {
+                        leaveListEl.innerHTML = `<div class="text-center text-slate-400 text-sm font-light"><p>🎉 วันนี้อยู่ครบทีม!</p><p class="text-xs mt-1">พร้อมหน้าพร้อมตา</p></div>`;
+                    } else {
+                         leaveListEl.innerHTML = todaysLeaves.map(l => `
+                            <div class="flex items-center gap-3 w-full bg-slate-50 p-2 rounded-xl">
+                                <div class="w-8 h-8 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-xs font-bold">${l.user_name.charAt(0)}</div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-700">${l.user_name}</p>
+                                    <p class="text-[10px] text-slate-400">${l.type}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                // Urgent Tasks
+                const deadlineListEl = getEl('dash-deadline-list');
+                if(deadlineListEl) {
+                    // Filter tasks: Not Done, Deadline exists
+                    const urgentTasks = myTasks
+                        .filter(t => t.status !== 'Done' && t.deadline)
+                        .sort((a,b) => new Date(a.deadline) - new Date(b.deadline))
+                        .slice(0, 5); // Take top 5
+
+                    if(urgentTasks.length === 0) {
+                        deadlineListEl.innerHTML = `<div class="text-center text-slate-400 text-sm font-light py-4">👍 ไม่มีงานด่วน</div>`;
+                    } else {
+                        deadlineListEl.innerHTML = urgentTasks.map(t => {
+                            const daysLeft = Math.ceil((new Date(t.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                            let badgeColor = 'bg-slate-100 text-slate-500';
+                            let badgeText = `${daysLeft} วัน`;
+                            
+                            if (daysLeft < 0) { badgeColor = 'bg-red-100 text-red-600'; badgeText = 'เกินกำหนด'; }
+                            else if (daysLeft === 0) { badgeColor = 'bg-orange-100 text-orange-600'; badgeText = 'วันนี้'; }
+                            else if (daysLeft <= 3) { badgeColor = 'bg-yellow-100 text-yellow-600'; }
+
+                            return `
+                            <div class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group" onclick="router.navigate('tasks')">
+                                <div class="truncate pr-2">
+                                    <p class="text-xs font-medium text-slate-700 truncate group-hover:text-indigo-600 transition-colors">${t.title}</p>
+                                    <p class="text-[10px] text-slate-400">${formatDate(t.deadline)}</p>
+                                </div>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap ${badgeColor}">${badgeText}</span>
+                            </div>
+                            `;
+                        }).join('');
+                    }
+                }
+
                 // Game Stats (Calculated)
                 const level = Math.floor(doneCount / 5) + 1;
                 const xp = doneCount % 5;
@@ -808,6 +915,7 @@
                 
                 // Render City
                 app.renderCity(doneCount, progressCount, todoCount);
+                lucide.createIcons();
             },
             
             renderCity: (done, progress, todo) => {
@@ -1065,7 +1173,10 @@
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group">
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="font-bold text-lg text-slate-800">${p.name}</h3>
-                            <button onclick="app.prepEditProject(${p.id}, '${p.name}', '${p.description || ''}')" class="text-slate-300 hover:text-indigo-600"><i data-lucide="edit-2" width="16"></i></button>
+                            <div class="flex gap-2">
+                                <button onclick="app.prepEditProject(${p.id}, '${p.name}', '${p.description || ''}')" class="text-slate-300 hover:text-indigo-600"><i data-lucide="edit-2" width="16"></i></button>
+                                <button onclick="app.deleteProject(${p.id})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" width="16"></i></button>
+                            </div>
                         </div>
                         <p class="text-slate-500 text-sm line-clamp-2">${p.description || '-'}</p>
                         <div class="mt-4 pt-3 border-t border-slate-50 flex justify-between text-xs text-slate-400">
@@ -1104,6 +1215,11 @@
                 app.toggleProjectForm();
                 app.loadProjects();
             },
+            deleteProject: async (id) => {
+                if(!confirm('ยืนยันลบโปรเจกต์นี้?')) return;
+                await db.from('projects').delete().eq('id', id);
+                app.loadProjects();
+            },
 
             // TASKS
             loadTasks: async () => {
@@ -1124,8 +1240,11 @@
                         
                         cols[status].innerHTML += `
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all group relative">
-                                <button onclick="app.prepEditTask(${task.id}, '${task.title}', '${task.assignee || ''}', '${task.deadline || ''}', '${task.description || ''}')" class="absolute top-3 right-3 text-slate-300 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="edit-2" width="14"></i></button>
-                                <p class="font-medium text-slate-800 mb-2 pr-6">${task.title}</p>
+                                <div class="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="app.prepEditTask(${task.id}, '${task.title}', '${task.assignee || ''}', '${task.deadline || ''}', '${task.description || ''}')" class="text-slate-300 hover:text-indigo-600 p-1"><i data-lucide="edit-2" width="14"></i></button>
+                                    <button onclick="app.deleteTask(${task.id})" class="text-slate-300 hover:text-red-500 p-1"><i data-lucide="trash-2" width="14"></i></button>
+                                </div>
+                                <p class="font-medium text-slate-800 mb-2 pr-12">${task.title}</p>
                                 ${task.description ? `<p class="text-xs text-slate-400 mb-2 line-clamp-1">${task.description}</p>` : ''}
                                 <div class="flex flex-wrap gap-2 text-xs text-slate-500 mb-3">
                                     <span class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded"><i data-lucide="user" width="12"></i> ${task.assignee || 'Unassigned'}</span>
@@ -1182,6 +1301,16 @@
             moveTask: async (id, status) => {
                 // Optimistic update omitted for brevity, direct call
                 await db.from('tasks').update({ status }).eq('id', id);
+                app.loadTasks();
+            },
+            deleteTask: async (id) => {
+                if(!confirm('ยืนยันลบงานนี้?')) return;
+                await db.from('tasks').delete().eq('id', id);
+                app.loadTasks();
+            },
+            clearDoneTasks: async () => {
+                if(!confirm('ยืนยันลบงานที่เสร็จแล้ว (Done) ทั้งหมด?')) return;
+                await db.from('tasks').delete().eq('status', 'Done');
                 app.loadTasks();
             },
 
