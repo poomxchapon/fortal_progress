@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WorkSpace - Work City Tycoon</title>
-    
+
     <!-- Google Fonts: Prompt Only (Unified for Thai support) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Supabase JS (UMD) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -24,59 +25,197 @@
 
     <style>
         /* Force Prompt font everywhere */
-        body { font-family: 'Prompt', sans-serif; -webkit-font-smoothing: antialiased; transition: background-color 0.3s, color 0.3s; }
-        .hidden { display: none !important; }
-        
+        body {
+            font-family: 'Prompt', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
         /* Loader */
-        .loader { width: 20px; height: 20px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
-        .loader-dark { border-color: #4f46e5; border-bottom-color: transparent; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            animation: rotation 1s linear infinite;
+        }
+
+        .loader-dark {
+            border-color: #4f46e5;
+            border-bottom-color: transparent;
+        }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         /* Typing Indicator */
-        .typing-dot { animation: typing 1.4s infinite ease-in-out both; background-color: #6366f1; border-radius: 50%; height: 6px; width: 6px; display: inline-block; margin: 0 1px; }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out both;
+            background-color: #6366f1;
+            border-radius: 50%;
+            height: 6px;
+            width: 6px;
+            display: inline-block;
+            margin: 0 1px;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
 
         /* Transitions */
-        .page-transition { animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
+        .page-transition {
+            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         /* Chat Slide In */
-        .chat-enter { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .chat-enter {
+            animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
 
         /* Calendar Grid */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
 
         /* --- GAME WIDGET STYLES --- */
-        .city-sky-morning { background: linear-gradient(to bottom, #60a5fa, #bfdbfe); }
-        .city-sky-afternoon { background: linear-gradient(to bottom, #3b82f6, #93c5fd); }
-        .city-sky-evening { background: linear-gradient(to bottom, #f59e0b, #fcd34d, #818cf8); }
-        .city-sky-night { background: linear-gradient(to bottom, #1e1b4b, #312e81, #4338ca); color: white; }
-        
-        .building-pop { animation: popUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; opacity: 0; transform: scale(0); transform-origin: bottom; }
-        @keyframes popUp { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+        .city-sky-morning {
+            background: linear-gradient(to bottom, #60a5fa, #bfdbfe);
+        }
+
+        .city-sky-afternoon {
+            background: linear-gradient(to bottom, #3b82f6, #93c5fd);
+        }
+
+        .city-sky-evening {
+            background: linear-gradient(to bottom, #f59e0b, #fcd34d, #818cf8);
+        }
+
+        .city-sky-night {
+            background: linear-gradient(to bottom, #1e1b4b, #312e81, #4338ca);
+            color: white;
+        }
+
+        .building-pop {
+            animation: popUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: scale(0);
+            transform-origin: bottom;
+        }
+
+        @keyframes popUp {
+            from {
+                opacity: 0;
+                transform: scale(0);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
 
         /* Hide scrollbar for city container but allow scroll */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
         /* Bento Grid Hover Effect */
-        .bento-card { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; }
-        .bento-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); z-index: 10; }
+        .bento-card {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        }
+
+        .bento-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            z-index: 10;
+        }
 
         /* ================= CYBERPUNK MODE CSS ================= */
         body.cyberpunk {
             background-color: #050505;
             color: #00f3ff;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
             background-size: 30px 30px;
@@ -90,26 +229,42 @@
             box-shadow: 0 0 10px rgba(0, 243, 255, 0.15), inset 0 0 20px rgba(0, 243, 255, 0.05);
             backdrop-filter: blur(10px);
         }
-        
+
         /* Override Text Colors */
-        .cyberpunk .text-slate-900, .cyberpunk .text-slate-800 { color: #fff; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
-        .cyberpunk .text-slate-700 { color: #cbd5e1; }
-        .cyberpunk .text-slate-600 { color: #94a3b8; }
-        .cyberpunk .text-slate-500, .cyberpunk .text-slate-400 { color: #64748b; }
-        
+        .cyberpunk .text-slate-900,
+        .cyberpunk .text-slate-800 {
+            color: #fff;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+
+        .cyberpunk .text-slate-700 {
+            color: #cbd5e1;
+        }
+
+        .cyberpunk .text-slate-600 {
+            color: #94a3b8;
+        }
+
+        .cyberpunk .text-slate-500,
+        .cyberpunk .text-slate-400 {
+            color: #64748b;
+        }
+
         /* Sidebar */
         .cyberpunk aside {
             background-color: #020202;
             border-right: 1px solid #00f3ff;
             box-shadow: 5px 0 20px rgba(0, 243, 255, 0.1);
         }
-        .cyberpunk .nav-item:hover, .cyberpunk .nav-item.bg-indigo-50 {
+
+        .cyberpunk .nav-item:hover,
+        .cyberpunk .nav-item.bg-indigo-50 {
             background-color: rgba(0, 243, 255, 0.15) !important;
             color: #00f3ff !important;
             box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
             border: 1px solid rgba(0, 243, 255, 0.3);
         }
-        
+
         /* Buttons */
         .cyberpunk button.bg-indigo-600 {
             background: linear-gradient(90deg, #00f3ff, #0066ff);
@@ -120,96 +275,152 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+
         .cyberpunk button.bg-indigo-600:hover {
             box-shadow: 0 0 20px #00f3ff, 0 0 40px #00f3ff;
             transform: scale(1.05);
         }
 
         /* Inputs */
-        .cyberpunk input, .cyberpunk select, .cyberpunk textarea {
+        .cyberpunk input,
+        .cyberpunk select,
+        .cyberpunk textarea {
             background-color: #080c14;
             border-color: #1e293b;
             color: #00f3ff;
         }
-        .cyberpunk input:focus, .cyberpunk select:focus, .cyberpunk textarea:focus {
+
+        .cyberpunk input:focus,
+        .cyberpunk select:focus,
+        .cyberpunk textarea:focus {
             border-color: #00f3ff;
             box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
             outline: none;
         }
 
         /* Cards & Containers */
-        .cyberpunk .bg-slate-50 { background-color: #0a0f1c; border-color: #1e293b; }
-        .cyberpunk .bg-slate-100 { background-color: #0f172a; border-color: #334155; }
-        
+        .cyberpunk .bg-slate-50 {
+            background-color: #0a0f1c;
+            border-color: #1e293b;
+        }
+
+        .cyberpunk .bg-slate-100 {
+            background-color: #0f172a;
+            border-color: #334155;
+        }
+
         /* Status Colors in Cyberpunk */
-        .cyberpunk .text-indigo-600 { color: #00f3ff; }
-        .cyberpunk .bg-indigo-100 { background-color: rgba(0, 243, 255, 0.2); color: #00f3ff; }
-        .cyberpunk .text-green-600 { color: #00ff9d; }
-        .cyberpunk .bg-green-50, .cyberpunk .bg-green-100 { background-color: rgba(0, 255, 157, 0.15); color: #00ff9d; }
-        .cyberpunk .text-red-600, .cyberpunk .text-red-500 { color: #ff0055; }
-        .cyberpunk .bg-red-50, .cyberpunk .bg-red-100 { background-color: rgba(255, 0, 85, 0.15); color: #ff0055; }
-        
+        .cyberpunk .text-indigo-600 {
+            color: #00f3ff;
+        }
+
+        .cyberpunk .bg-indigo-100 {
+            background-color: rgba(0, 243, 255, 0.2);
+            color: #00f3ff;
+        }
+
+        .cyberpunk .text-green-600 {
+            color: #00ff9d;
+        }
+
+        .cyberpunk .bg-green-50,
+        .cyberpunk .bg-green-100 {
+            background-color: rgba(0, 255, 157, 0.15);
+            color: #00ff9d;
+        }
+
+        .cyberpunk .text-red-600,
+        .cyberpunk .text-red-500 {
+            color: #ff0055;
+        }
+
+        .cyberpunk .bg-red-50,
+        .cyberpunk .bg-red-100 {
+            background-color: rgba(255, 0, 85, 0.15);
+            color: #ff0055;
+        }
+
         /* Scrollbar in Cyberpunk */
-        .cyberpunk ::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 2px; }
-        .cyberpunk ::-webkit-scrollbar-track { background: #050505; }
+        .cyberpunk ::-webkit-scrollbar-thumb {
+            background: #00f3ff;
+            border-radius: 2px;
+        }
+
+        .cyberpunk ::-webkit-scrollbar-track {
+            background: #050505;
+        }
 
         /* Headers */
-        .cyberpunk h1, .cyberpunk h2, .cyberpunk h3 {
+        .cyberpunk h1,
+        .cyberpunk h2,
+        .cyberpunk h3 {
             text-transform: uppercase;
             letter-spacing: 1px;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 h-screen h-[100dvh] overflow-hidden flex flex-col transition-colors duration-300">
+
+<body
+    class="bg-slate-50 text-slate-800 h-screen h-[100dvh] overflow-hidden flex flex-col transition-colors duration-300">
 
     <!-- ================= AUTH VIEW ================= -->
     <div id="auth-view" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-white sm:bg-slate-50">
-        <div class="w-full max-w-sm bg-white sm:rounded-3xl sm:shadow-xl sm:border border-slate-100 p-8 sm:p-10 page-transition">
+        <div
+            class="w-full max-w-sm bg-white sm:rounded-3xl sm:shadow-xl sm:border border-slate-100 p-8 sm:p-10 page-transition">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white mb-4 shadow-lg shadow-indigo-200">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white mb-4 shadow-lg shadow-indigo-200">
                     <i data-lucide="briefcase" width="32" height="32"></i>
                 </div>
                 <h2 id="auth-title" class="text-2xl font-bold text-slate-900">ยินดีต้อนรับ</h2>
                 <div class="mt-2">
                     <p class="text-slate-700 font-medium text-lg">WorkSpace System</p>
-                    <p class="text-slate-400 text-sm mt-0.5">by <span class="font-semibold text-indigo-600">Fortal Interactive</span></p>
+                    <p class="text-slate-400 text-sm mt-0.5">by <span class="font-semibold text-indigo-600">Fortal
+                            Interactive</span></p>
                 </div>
             </div>
 
-            <div id="auth-error" class="hidden mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-start gap-3 border border-red-100">
-                <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i> 
+            <div id="auth-error"
+                class="hidden mb-6 p-4 bg-red-50 text-red-600 text-sm rounded-xl flex items-start gap-3 border border-red-100">
+                <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 mt-0.5"></i>
                 <span id="auth-error-msg" class="leading-relaxed"></span>
             </div>
 
             <form id="auth-form" class="space-y-5">
                 <div id="name-field" class="hidden">
                     <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">ชื่อ-นามสกุล</label>
-                    <input type="text" id="input-name" name="name" autocomplete="name" class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    <input type="text" id="input-name" name="name" autocomplete="name"
+                        class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">อีเมล</label>
-                    <input type="email" id="input-email" name="email" autocomplete="username" required class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    <input type="email" id="input-email" name="email" autocomplete="username" required
+                        class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">รหัสผ่าน</label>
-                    <input type="password" id="input-password" name="password" autocomplete="current-password" required class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                    <input type="password" id="input-password" name="password" autocomplete="current-password" required
+                        class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                 </div>
 
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2 cursor-pointer group">
-                        <input type="checkbox" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                        <input type="checkbox" checked
+                            class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                         <span class="text-sm text-slate-500 group-hover:text-slate-700">จำฉันไว้ในระบบ</span>
                     </label>
                 </div>
 
-                <button type="submit" id="btn-auth" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 flex justify-center items-center gap-3">
+                <button type="submit" id="btn-auth"
+                    class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-semibold hover:bg-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 flex justify-center items-center gap-3">
                     <span id="btn-auth-text">เข้าสู่ระบบ</span>
                     <div id="auth-loader" class="loader hidden"></div>
                 </button>
             </form>
 
             <div class="mt-8 text-center">
-                <button id="toggle-auth" class="text-sm text-slate-500 hover:text-indigo-600 font-medium transition-colors">
+                <button id="toggle-auth"
+                    class="text-sm text-slate-500 hover:text-indigo-600 font-medium transition-colors">
                     ยังไม่มีบัญชี? <span class="underline decoration-indigo-200 underline-offset-4">ลงทะเบียนใหม่</span>
                 </button>
             </div>
@@ -219,10 +430,12 @@
     <!-- ================= APP VIEW ================= -->
     <div id="app-view" class="hidden flex h-full relative">
         <!-- Mobile Sidebar Overlay -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
+        <div id="sidebar-overlay"
+            class="fixed inset-0 bg-slate-900/60 z-40 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl lg:shadow-none">
+        <aside id="sidebar"
+            class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl lg:shadow-none">
             <div class="p-8 pb-4">
                 <div class="flex items-center gap-4">
                     <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-200">
@@ -237,49 +450,74 @@
 
             <nav class="px-4 py-4 space-y-1.5 flex-1 overflow-y-auto">
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">General</p>
-                <button onclick="router.navigate('dashboard')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-dashboard">
+                <button onclick="router.navigate('dashboard')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-dashboard">
                     <i data-lucide="layout-grid" class="w-5 h-5"></i> ภาพรวม
                 </button>
-                <button onclick="router.navigate('calendar')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-calendar">
+                <button onclick="router.navigate('calendar')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-calendar">
                     <i data-lucide="calendar" class="w-5 h-5"></i> ปฏิทินทีม
                 </button>
-                <button onclick="router.navigate('team')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-team">
+                <button onclick="router.navigate('team')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-team">
                     <i data-lucide="users" class="w-5 h-5"></i> ทีมงาน (Team)
                 </button>
-                <button onclick="router.navigate('settings')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-settings">
+                <button onclick="router.navigate('settings')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-settings">
                     <i data-lucide="settings" class="w-5 h-5"></i> ตั้งค่า
                 </button>
 
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">Work</p>
-                <button onclick="router.navigate('projects')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-projects">
+                <button onclick="router.navigate('projects')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-projects">
                     <i data-lucide="folder-kanban" class="w-5 h-5"></i> โปรเจกต์
                 </button>
-                <button onclick="router.navigate('tasks')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-tasks">
+                <button onclick="router.navigate('tasks')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-tasks">
                     <i data-lucide="check-square" class="w-5 h-5"></i> งานของฉัน
                 </button>
-                <button onclick="router.navigate('meetings')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-meetings">
+                <button onclick="router.navigate('meetings')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-meetings">
                     <i data-lucide="presentation" class="w-5 h-5"></i> การประชุม
                 </button>
                 <!-- Google Drive Button -->
-                <a href="https://drive.google.com/drive/folders/1UAH3Yh6doviayDCNmXEh0wQr7vbf0gIO?usp=sharing" target="_blank" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group">
+                <a href="https://drive.google.com/drive/folders/1UAH3Yh6doviayDCNmXEh0wQr7vbf0gIO?usp=sharing"
+                    target="_blank"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group">
                     <i data-lucide="hard-drive" class="w-5 h-5"></i> Google Drive
                 </a>
 
                 <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4">HR</p>
-                <button onclick="router.navigate('checkin')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-checkin">
+                <button onclick="router.navigate('checkin')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-checkin">
                     <i data-lucide="map-pin" class="w-5 h-5"></i> ลงเวลาเข้างาน
                 </button>
-                <button onclick="router.navigate('leave')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-leave">
+                <button onclick="router.navigate('leave')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-leave">
                     <i data-lucide="coffee" class="w-5 h-5"></i> ขอลาหยุด
                 </button>
 
                 <!-- Admin Section -->
                 <div id="menu-admin-section" class="hidden">
-                    <p class="px-4 text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-2 mt-4">Admin Zone</p>
-                    <button onclick="router.navigate('admin')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-admin">
+                    <p class="px-4 text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-2 mt-4">Admin Zone
+                    </p>
+                    <button onclick="router.navigate('admin')"
+                        class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                        id="nav-admin">
                         <i data-lucide="shield" class="w-5 h-5"></i> ผู้ดูแลระบบ
                     </button>
-                    <button onclick="router.navigate('report')" class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group" id="nav-report">
+                    <button onclick="router.navigate('report')"
+                        class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                        id="nav-report">
                         <i data-lucide="file-bar-chart-2" class="w-5 h-5"></i> รายงานสรุป
                     </button>
                 </div>
@@ -287,22 +525,28 @@
 
             <div class="p-4 m-4 bg-slate-50 rounded-2xl border border-slate-100 relative group">
                 <!-- Theme Toggle Button -->
-                <button onclick="app.toggleTheme()" class="absolute top-2 right-10 text-slate-400 hover:text-indigo-600 p-1 rounded-md transition-colors" title="เปลี่ยนธีม">
+                <button onclick="app.toggleTheme()"
+                    class="absolute top-2 right-10 text-slate-400 hover:text-indigo-600 p-1 rounded-md transition-colors"
+                    title="เปลี่ยนธีม">
                     <i data-lucide="moon" width="16" id="theme-icon"></i>
                 </button>
                 <!-- Edit Profile Button -->
-                <button onclick="app.openEditProfile()" class="absolute top-2 right-2 text-slate-400 hover:text-indigo-600 p-1 rounded-md transition-colors" title="แก้ไขข้อมูลส่วนตัว">
+                <button onclick="app.openEditProfile()"
+                    class="absolute top-2 right-2 text-slate-400 hover:text-indigo-600 p-1 rounded-md transition-colors"
+                    title="แก้ไขข้อมูลส่วนตัว">
                     <i data-lucide="edit-3" width="16"></i>
                 </button>
 
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-sm font-bold shadow-sm" id="user-avatar">U</div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-sm font-bold shadow-sm"
+                        id="user-avatar">U</div>
                     <div class="overflow-hidden pr-6">
                         <p class="text-sm font-semibold text-slate-900 truncate" id="user-name">User</p>
                         <p class="text-xs text-slate-500 capitalize truncate" id="user-role">Employee</p>
                     </div>
                 </div>
-                <button id="btn-logout" onclick="auth.logout()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-200">
+                <button id="btn-logout" onclick="auth.logout()"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 hover:text-red-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-200">
                     <i data-lucide="log-out" width="14"></i> ออกจากระบบ
                 </button>
             </div>
@@ -311,53 +555,64 @@
         <!-- Main Content -->
         <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50" id="main-content-area">
             <!-- Header (Mobile) -->
-            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-20">
+            <header
+                class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 lg:hidden flex items-center justify-between sticky top-0 z-20">
                 <div class="flex items-center gap-2.5">
                     <span class="font-bold text-slate-800">WorkSpace</span>
                 </div>
-                <button id="menu-btn" class="p-2 hover:bg-slate-100 rounded-lg min-w-[40px] min-h-[40px] flex items-center justify-center">
+                <button id="menu-btn"
+                    class="p-2 hover:bg-slate-100 rounded-lg min-w-[40px] min-h-[40px] flex items-center justify-center">
                     <i data-lucide="menu" class="text-slate-600"></i>
                 </button>
             </header>
 
             <!-- Content Area -->
             <div class="flex-1 overflow-auto p-4 sm:p-6 lg:p-10 relative">
-                
+
                 <!-- Dashboard (Bento Style + Game Widget + New Panels) -->
                 <div id="page-dashboard" class="page max-w-7xl mx-auto space-y-6 page-transition">
                     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div>
-                            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">สวัสดีคุณ <span class="display-name text-indigo-600">User</span> 👋</h2>
+                            <h2 class="text-3xl font-bold text-slate-900 tracking-tight">สวัสดีคุณ <span
+                                    class="display-name text-indigo-600">User</span> 👋</h2>
                             <p class="text-slate-500 mt-1 font-light" id="current-date">...</p>
                         </div>
                     </div>
 
                     <!-- Bento Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 auto-rows-min">
-                        
+
                         <!-- Panel: QUICK CHECK-IN (Replaces Status) (2x1) -->
-                        <div class="col-span-1 md:col-span-2 bento-card bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden group">
+                        <div
+                            class="col-span-1 md:col-span-2 bento-card bg-gradient-to-br from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg flex flex-col justify-between h-40 relative overflow-hidden group">
                             <div class="flex justify-between items-start z-10 relative">
                                 <div>
-                                    <span class="text-indigo-100 text-xs font-medium bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1 w-fit">
+                                    <span
+                                        class="text-indigo-100 text-xs font-medium bg-white/20 px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1 w-fit">
                                         <i data-lucide="clock" width="12"></i> ลงเวลาเข้างาน
                                     </span>
                                     <div class="mt-3">
                                         <div id="dash-checkin-status" class="text-2xl font-bold">กำลังโหลด...</div>
-                                        <div id="dash-checkin-time" class="text-xs text-indigo-100 opacity-90 mt-0.5">...</div>
+                                        <div id="dash-checkin-time" class="text-xs text-indigo-100 opacity-90 mt-0.5">
+                                            ...</div>
                                     </div>
                                 </div>
-                                <button id="btn-dash-checkin" onclick="app.quickCheckAction()" class="bg-white text-indigo-600 p-3 rounded-full shadow-lg hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <button id="btn-dash-checkin" onclick="app.quickCheckAction()"
+                                    class="bg-white text-indigo-600 p-3 rounded-full shadow-lg hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                                     <i data-lucide="map-pin" width="24"></i>
                                 </button>
                             </div>
                             <!-- Decor -->
-                            <i data-lucide="map" class="absolute -bottom-4 -right-4 text-white/10 w-32 h-32 rotate-12"></i>
+                            <i data-lucide="map"
+                                class="absolute -bottom-4 -right-4 text-white/10 w-32 h-32 rotate-12"></i>
                         </div>
 
                         <!-- Panel: Total Tasks (1x1) -->
-                        <div class="bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group">
-                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+                        <div
+                            class="bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group">
+                            <div
+                                class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform duration-500">
+                            </div>
                             <div class="relative z-10">
                                 <div class="flex items-center gap-3 mb-2 text-indigo-600">
                                     <i data-lucide="briefcase" class="w-5 h-5"></i>
@@ -369,8 +624,11 @@
                         </div>
 
                         <!-- Panel: Pending (1x1) -->
-                        <div class="bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group">
-                            <div class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+                        <div
+                            class="bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between h-40 relative overflow-hidden group">
+                            <div
+                                class="absolute -right-4 -top-4 w-20 h-20 bg-orange-50 rounded-full group-hover:scale-110 transition-transform duration-500">
+                            </div>
                             <div class="relative z-10">
                                 <div class="flex items-center gap-3 mb-2 text-orange-500">
                                     <i data-lucide="clock" class="w-5 h-5"></i>
@@ -382,10 +640,12 @@
                         </div>
 
                         <!-- Panel: Who's on Leave (2x2) -->
-                        <div class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col relative overflow-hidden min-h-[160px]">
+                        <div
+                            class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col relative overflow-hidden min-h-[160px]">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-2">
-                                    <div class="bg-red-100 p-2 rounded-lg text-red-500"><i data-lucide="coffee" width="18"></i></div>
+                                    <div class="bg-red-100 p-2 rounded-lg text-red-500"><i data-lucide="coffee"
+                                            width="18"></i></div>
                                     <h3 class="font-bold text-slate-800">ใครลาบ้างวันนี้?</h3>
                                 </div>
                                 <span class="text-xs text-slate-400" id="today-date-leave">...</span>
@@ -396,32 +656,45 @@
                         </div>
 
                         <!-- Panel: Urgent Tasks (2x2) -->
-                        <div class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col relative overflow-hidden min-h-[160px]">
-                             <div class="flex items-center justify-between mb-4">
+                        <div
+                            class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col relative overflow-hidden min-h-[160px]">
+                            <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center gap-2">
-                                    <div class="bg-amber-100 p-2 rounded-lg text-amber-600"><i data-lucide="flame" width="18"></i></div>
+                                    <div class="bg-amber-100 p-2 rounded-lg text-amber-600"><i data-lucide="flame"
+                                            width="18"></i></div>
                                     <h3 class="font-bold text-slate-800">งานด่วนจี๋ (Deadlines)</h3>
                                 </div>
-                                <button onclick="router.navigate('tasks')" class="text-xs text-indigo-600 hover:underline">ดูทั้งหมด</button>
+                                <button onclick="router.navigate('tasks')"
+                                    class="text-xs text-indigo-600 hover:underline">ดูทั้งหมด</button>
                             </div>
-                            <div id="dash-deadline-list" class="flex-1 space-y-2 overflow-y-auto max-h-40 pr-2 custom-scrollbar">
-                                <div class="flex justify-center py-4"><div class="loader loader-dark"></div></div>
+                            <div id="dash-deadline-list"
+                                class="flex-1 space-y-2 overflow-y-auto max-h-40 pr-2 custom-scrollbar">
+                                <div class="flex justify-center py-4">
+                                    <div class="loader loader-dark"></div>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Work City Widget (Full Width) -->
-                        <div class="col-span-1 md:col-span-2 lg:col-span-4 bento-card bg-slate-900 rounded-3xl shadow-lg border border-slate-200 h-80 relative overflow-hidden group">
+                        <div
+                            class="col-span-1 md:col-span-2 lg:col-span-4 bento-card bg-slate-900 rounded-3xl shadow-lg border border-slate-200 h-80 relative overflow-hidden group">
                             <!-- Game Canvas Background -->
-                            <div id="city-sky" class="absolute inset-0 z-0 city-sky-morning transition-colors duration-1000"></div>
-                            
+                            <div id="city-sky"
+                                class="absolute inset-0 z-0 city-sky-morning transition-colors duration-1000"></div>
+
                             <!-- Decor -->
-                            <div class="absolute top-6 left-8 text-white/30 animate-pulse"><i data-lucide="cloud" width="48"></i></div>
-                            <div class="absolute top-12 right-16 text-white/20"><i data-lucide="cloud" width="32"></i></div>
+                            <div class="absolute top-6 left-8 text-white/30 animate-pulse"><i data-lucide="cloud"
+                                    width="48"></i></div>
+                            <div class="absolute top-12 right-16 text-white/20"><i data-lucide="cloud" width="32"></i>
+                            </div>
 
                             <!-- Floating HUD -->
-                            <div class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-sm border border-white/50 flex gap-4 items-center">
+                            <div
+                                class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-sm border border-white/50 flex gap-4 items-center">
                                 <div class="flex items-center gap-2">
-                                    <span class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded border border-yellow-500 shadow-sm">LV. <span id="game-level">1</span></span>
+                                    <span
+                                        class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded border border-yellow-500 shadow-sm">LV.
+                                        <span id="game-level">1</span></span>
                                     <span class="text-sm font-bold text-slate-700">Work City</span>
                                 </div>
                                 <div class="h-4 w-px bg-slate-300"></div>
@@ -431,7 +704,9 @@
                                         <span><span id="xp-val">0</span> to up</span>
                                     </div>
                                     <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                        <div id="xp-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        <div id="xp-bar"
+                                            class="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                                            style="width: 0%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -439,37 +714,47 @@
                             <!-- City Container -->
                             <div class="flex-1 relative z-10 flex items-end justify-center h-full w-full">
                                 <!-- Ground -->
-                                <div class="absolute bottom-0 w-full h-8 bg-[#4ade80] z-10 border-t-4 border-[#22c55e]"></div>
-                                <div class="absolute bottom-0 w-full h-1/4 bg-gradient-to-t from-emerald-900/50 to-transparent z-0"></div>
-                                
+                                <div class="absolute bottom-0 w-full h-8 bg-[#4ade80] z-10 border-t-4 border-[#22c55e]">
+                                </div>
+                                <div
+                                    class="absolute bottom-0 w-full h-1/4 bg-gradient-to-t from-emerald-900/50 to-transparent z-0">
+                                </div>
+
                                 <!-- Buildings Area -->
-                                <div id="city-container" class="relative z-10 flex items-end gap-3 px-10 pb-8 h-full w-full overflow-x-auto no-scrollbar" style="mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);">
+                                <div id="city-container"
+                                    class="relative z-10 flex items-end gap-3 px-10 pb-8 h-full w-full overflow-x-auto no-scrollbar"
+                                    style="mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);">
                                     <!-- JS generates buildings here -->
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Settings Page -->
-                <div id="page-settings" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-settings"
+                    class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">⚙️ ตั้งค่าระบบ</h2>
-                    
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Appearance Settings -->
                         <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
                             <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                                 <i data-lucide="palette" width="20"></i> การแสดงผล
                             </h3>
-                            
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+
+                            <div
+                                class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                 <div>
                                     <p class="font-medium text-slate-700">Cyberpunk Mode 🚀</p>
                                     <p class="text-xs text-slate-500">เปลี่ยนธีมเป็นสีมืดสไตล์อนาคต</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="theme-toggle" class="sr-only peer" onchange="app.toggleTheme()">
-                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                    <input type="checkbox" id="theme-toggle" class="sr-only peer"
+                                        onchange="app.toggleTheme()">
+                                    <div
+                                        class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                                    </div>
                                 </label>
                             </div>
                         </div>
@@ -479,14 +764,16 @@
                             <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                                 <i data-lucide="user-cog" width="20"></i> บัญชีผู้ใช้
                             </h3>
-                            
+
                             <div class="space-y-3">
-                                <button onclick="app.openEditProfile()" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors text-left">
+                                <button onclick="app.openEditProfile()"
+                                    class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors text-left">
                                     <span class="font-medium text-slate-700">แก้ไขข้อมูลส่วนตัว</span>
                                     <i data-lucide="chevron-right" width="16" class="text-slate-400"></i>
                                 </button>
-                                
-                                <button onclick="auth.logout()" class="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-2xl border border-red-100 transition-colors text-left text-red-600">
+
+                                <button onclick="auth.logout()"
+                                    class="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-2xl border border-red-100 transition-colors text-left text-red-600">
                                     <span class="font-medium">ออกจากระบบ</span>
                                     <i data-lucide="log-out" width="16"></i>
                                 </button>
@@ -496,24 +783,30 @@
                 </div>
 
                 <!-- Calendar Page -->
-                <div id="page-calendar" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-calendar"
+                    class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-2xl font-bold text-slate-800">📅 ปฏิทินทีม</h2>
-                        <button id="btn-add-event" onclick="app.toggleEventForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2 hidden">
+                        <button id="btn-add-event" onclick="app.toggleEventForm()"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2 hidden">
                             <i data-lucide="plus"></i> เพิ่มวันหยุด/อีเว้นท์
                         </button>
                     </div>
 
-                    <div id="event-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+                    <div id="event-form-container"
+                        class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
                         <form id="add-event-form" class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">ชื่อรายการ</label>
-                                    <input type="text" id="event-title" required placeholder="เช่น วันหยุดปีใหม่, งานเลี้ยงบริษัท" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                    <input type="text" id="event-title" required
+                                        placeholder="เช่น วันหยุดปีใหม่, งานเลี้ยงบริษัท"
+                                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">วันที่</label>
-                                    <input type="date" id="event-date" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                    <input type="date" id="event-date" required
+                                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
                                 </div>
                             </div>
                             <div>
@@ -524,8 +817,10 @@
                                 </select>
                             </div>
                             <div class="flex justify-end gap-2">
-                                <button type="button" onclick="app.toggleEventForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
+                                <button type="button" onclick="app.toggleEventForm()"
+                                    class="px-4 py-2 text-slate-500">ยกเลิก</button>
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
                             </div>
                         </form>
                     </div>
@@ -534,51 +829,72 @@
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-lg font-bold text-slate-700" id="calendar-month-year">...</h3>
                             <div class="flex gap-2">
-                                <button onclick="app.changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full"><i data-lucide="chevron-left"></i></button>
-                                <button onclick="app.changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-full"><i data-lucide="chevron-right"></i></button>
+                                <button onclick="app.changeMonth(-1)" class="p-2 hover:bg-slate-100 rounded-full"><i
+                                        data-lucide="chevron-left"></i></button>
+                                <button onclick="app.changeMonth(1)" class="p-2 hover:bg-slate-100 rounded-full"><i
+                                        data-lucide="chevron-right"></i></button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-semibold text-slate-400 uppercase">
-                            <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
+                        <div
+                            class="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-semibold text-slate-400 uppercase">
+                            <div>อา</div>
+                            <div>จ</div>
+                            <div>อ</div>
+                            <div>พ</div>
+                            <div>พฤ</div>
+                            <div>ศ</div>
+                            <div>ส</div>
                         </div>
                         <div id="calendar-grid" class="calendar-grid">
                             <!-- JS generates dates here -->
                         </div>
                         <div class="mt-6 flex gap-4 text-xs text-slate-500 flex-wrap">
-                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-400"></span> วันลา</div>
-                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-indigo-400"></span> Deadline งาน</div>
-                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-rose-500"></span> วันหยุด</div>
-                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-orange-400"></span> กิจกรรม</div>
+                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-400"></span>
+                                วันลา</div>
+                            <div class="flex items-center gap-1"><span
+                                    class="w-3 h-3 rounded-full bg-indigo-400"></span> Deadline งาน</div>
+                            <div class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                                วันหยุด</div>
+                            <div class="flex items-center gap-1"><span
+                                    class="w-3 h-3 rounded-full bg-orange-400"></span> กิจกรรม</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Team Page -->
-                <div id="page-team" class="page max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-team"
+                    class="page max-w-7xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">👥 ทีมงานทั้งหมด</h2>
-                    
+
                     <div id="team-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         <!-- JS loads profiles here as Bento Cards -->
                     </div>
                 </div>
 
                 <!-- Projects Page -->
-                <div id="page-projects" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-projects"
+                    class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <div class="flex justify-between items-center">
                         <h2 class="text-2xl font-bold text-slate-800">🚀 โปรเจกต์</h2>
-                        <button onclick="app.toggleProjectForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700">
+                        <button onclick="app.toggleProjectForm()"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg shadow-indigo-100 flex items-center gap-2 hover:bg-indigo-700">
                             <i data-lucide="plus"></i> สร้างใหม่
                         </button>
                     </div>
 
-                    <div id="project-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+                    <div id="project-form-container"
+                        class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
                         <form id="add-project-form" class="space-y-4">
                             <input type="hidden" id="edit-project-id">
-                            <input type="text" id="project-name" required placeholder="ชื่อโปรเจกต์" class="w-full px-4 py-2 bg-slate-50 border rounded-xl">
-                            <textarea id="project-desc" placeholder="รายละเอียด" class="w-full px-4 py-2 bg-slate-50 border rounded-xl"></textarea>
+                            <input type="text" id="project-name" required placeholder="ชื่อโปรเจกต์"
+                                class="w-full px-4 py-2 bg-slate-50 border rounded-xl">
+                            <textarea id="project-desc" placeholder="รายละเอียด"
+                                class="w-full px-4 py-2 bg-slate-50 border rounded-xl"></textarea>
                             <div class="flex justify-end gap-2">
-                                <button type="button" onclick="app.toggleProjectForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
+                                <button type="button" onclick="app.toggleProjectForm()"
+                                    class="px-4 py-2 text-slate-500">ยกเลิก</button>
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
                             </div>
                         </form>
                     </div>
@@ -587,44 +903,55 @@
                 </div>
 
                 <!-- Tasks Page -->
-                <div id="page-tasks" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-tasks"
+                    class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <div class="flex justify-between items-center">
                         <h2 class="text-2xl font-bold text-slate-800">📋 จัดการงาน (Tasks)</h2>
                         <div class="flex gap-2">
-                             <button onclick="app.clearDoneTasks()" class="bg-white text-red-500 border border-red-200 px-4 py-2 rounded-xl font-medium hover:bg-red-50 hover:border-red-300 flex items-center gap-2">
+                            <button onclick="app.clearDoneTasks()"
+                                class="bg-white text-red-500 border border-red-200 px-4 py-2 rounded-xl font-medium hover:bg-red-50 hover:border-red-300 flex items-center gap-2">
                                 <i data-lucide="trash-2" width="16"></i> ล้างงานเสร็จแล้ว
                             </button>
-                            <button onclick="app.toggleTaskForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+                            <button onclick="app.toggleTaskForm()"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
                                 <i data-lucide="plus"></i> สั่งงานใหม่
                             </button>
                         </div>
                     </div>
 
-                    <div id="task-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+                    <div id="task-form-container"
+                        class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
                         <form id="add-task-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="hidden" id="edit-task-id">
                             <div class="md:col-span-2">
                                 <label class="text-xs font-bold text-slate-500 uppercase">ชื่องาน</label>
-                                <input type="text" id="task-title" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                <input type="text" id="task-title" required
+                                    class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="text-xs font-bold text-slate-500 uppercase">รายละเอียด (Description)</label>
-                                <textarea id="task-desc" placeholder="รายละเอียดเพิ่มเติมของงาน..." class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                                <label class="text-xs font-bold text-slate-500 uppercase">รายละเอียด
+                                    (Description)</label>
+                                <textarea id="task-desc" placeholder="รายละเอียดเพิ่มเติมของงาน..."
+                                    class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase">มอบหมายให้ (Assignee)</label>
-                                <select id="task-assignee" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-slate-700">
+                                <select id="task-assignee"
+                                    class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-slate-700">
                                     <option value="">เลือกพนักงาน...</option>
                                     <!-- JS populates team -->
                                 </select>
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase">กำหนดส่ง (Deadline)</label>
-                                <input type="date" id="task-deadline" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-slate-700">
+                                <input type="date" id="task-deadline"
+                                    class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-slate-700">
                             </div>
                             <div class="md:col-span-2 flex justify-end gap-2 mt-2">
-                                <button type="button" onclick="app.toggleTaskForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึกงาน</button>
+                                <button type="button" onclick="app.toggleTaskForm()"
+                                    class="px-4 py-2 text-slate-500">ยกเลิก</button>
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึกงาน</button>
                             </div>
                         </form>
                     </div>
@@ -632,53 +959,67 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- To Do -->
                         <div class="bg-slate-100 rounded-2xl p-4 h-fit">
-                            <div class="flex justify-between mb-3"><span class="font-bold text-slate-700">To Do</span><span id="count-todo" class="bg-white px-2 rounded text-xs py-1">0</span></div>
+                            <div class="flex justify-between mb-3"><span class="font-bold text-slate-700">To
+                                    Do</span><span id="count-todo" class="bg-white px-2 rounded text-xs py-1">0</span>
+                            </div>
                             <div id="list-todo" class="space-y-3 min-h-[50px]"></div>
                         </div>
                         <!-- In Progress -->
                         <div class="bg-blue-50 rounded-2xl p-4 h-fit border border-blue-100">
-                            <div class="flex justify-between mb-3"><span class="font-bold text-blue-700">In Progress</span><span id="count-progress" class="bg-white px-2 rounded text-xs py-1">0</span></div>
+                            <div class="flex justify-between mb-3"><span class="font-bold text-blue-700">In
+                                    Progress</span><span id="count-progress"
+                                    class="bg-white px-2 rounded text-xs py-1">0</span></div>
                             <div id="list-progress" class="space-y-3 min-h-[50px]"></div>
                         </div>
                         <!-- Done -->
                         <div class="bg-green-50 rounded-2xl p-4 h-fit border border-green-100">
-                            <div class="flex justify-between mb-3"><span class="font-bold text-green-700">Done</span><span id="count-done" class="bg-white px-2 rounded text-xs py-1">0</span></div>
+                            <div class="flex justify-between mb-3"><span
+                                    class="font-bold text-green-700">Done</span><span id="count-done"
+                                    class="bg-white px-2 rounded text-xs py-1">0</span></div>
                             <div id="list-done" class="space-y-3 min-h-[50px]"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Meetings Page -->
-                <div id="page-meetings" class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-meetings"
+                    class="page max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <div class="flex justify-between items-center">
                         <div>
                             <h2 class="text-2xl font-bold text-slate-800">📝 บันทึกการประชุม</h2>
                             <p class="text-slate-500 text-sm font-light mt-1">จดบันทึกและแชร์สรุปการประชุมกับทีม</p>
                         </div>
-                        <button onclick="app.toggleMeetingForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+                        <button onclick="app.toggleMeetingForm()"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-medium shadow-lg hover:bg-indigo-700 flex items-center gap-2">
                             <i data-lucide="plus"></i> จดบันทึก
                         </button>
                     </div>
 
-                    <div id="meeting-form-container" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
+                    <div id="meeting-form-container"
+                        class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 p-5 mb-6">
                         <form id="add-meeting-form" class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">หัวข้อการประชุม</label>
-                                    <input type="text" id="meeting-title" required placeholder="เช่น ประชุมวางแผน Q1" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                    <input type="text" id="meeting-title" required placeholder="เช่น ประชุมวางแผน Q1"
+                                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
                                 </div>
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">วันที่</label>
-                                    <input type="date" id="meeting-date" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                                    <input type="date" id="meeting-date" required
+                                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
                                 </div>
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-500 uppercase">รายละเอียด / สรุป</label>
-                                <textarea id="meeting-summary" required placeholder="สรุปเนื้อหาสำคัญ..." rows="6" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                                <textarea id="meeting-summary" required placeholder="สรุปเนื้อหาสำคัญ..." rows="6"
+                                    class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
                             </div>
                             <div class="flex justify-end gap-2">
-                                <button type="button" onclick="app.toggleMeetingForm()" class="px-4 py-2 text-slate-500">ยกเลิก</button>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
+                                <button type="button" onclick="app.toggleMeetingForm()"
+                                    class="px-4 py-2 text-slate-500">ยกเลิก</button>
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-6 py-2 rounded-xl">บันทึก</button>
                             </div>
                         </form>
                     </div>
@@ -689,35 +1030,48 @@
                 </div>
 
                 <!-- Check-in Page -->
-                <div id="page-checkin" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-checkin"
+                    class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">📍 ลงเวลาทำงาน</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm flex flex-col items-center justify-center">
+                        <div
+                            class="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm flex flex-col items-center justify-center">
                             <p class="text-lg font-semibold text-slate-800 mb-6" id="checkin-date">...</p>
-                            <div id="checkin-loading" class="hidden"><div class="loader loader-dark"></div></div>
+                            <div id="checkin-loading" class="hidden">
+                                <div class="loader loader-dark"></div>
+                            </div>
                             <div id="status-checked-in" class="hidden">
-                                <div class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="check-circle-2" width="40"></i></div>
+                                <div
+                                    class="w-20 h-20 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i data-lucide="check-circle-2" width="40"></i></div>
                                 <p class="text-2xl font-bold text-green-600">เข้างานแล้ว</p>
                                 <p class="text-slate-500 mt-1">เวลา: <span id="val-checkin-time">--:--</span></p>
-                                <button onclick="app.handleCheckOut()" id="btn-checkout" class="mt-6 bg-red-50 text-red-600 px-6 py-2 rounded-xl font-bold hover:bg-red-100 w-full">ลงเวลาออก</button>
-                                <p id="checked-out-msg" class="hidden mt-4 text-sm text-slate-500">ออกงานแล้ว: <span id="val-checkout-time"></span></p>
+                                <button onclick="app.handleCheckOut()" id="btn-checkout"
+                                    class="mt-6 bg-red-50 text-red-600 px-6 py-2 rounded-xl font-bold hover:bg-red-100 w-full">ลงเวลาออก</button>
+                                <p id="checked-out-msg" class="hidden mt-4 text-sm text-slate-500">ออกงานแล้ว: <span
+                                        id="val-checkout-time"></span></p>
                             </div>
                             <div id="status-idle" class="w-full">
-                                <button onclick="app.getLocation()" id="btn-gps" class="w-full bg-slate-50 text-slate-600 px-4 py-3 rounded-2xl mb-3 font-semibold hover:bg-slate-100 flex justify-center gap-2">
-                                    <i data-lucide="map-pin"></i> ระบุตำแหน่ง
-                                </button>
-                                <div id="gps-status" class="hidden text-sm mb-3">ระยะห่าง: <span id="gps-dist" class="font-bold">0</span> ม.</div>
-                                <button onclick="app.handleCheckIn()" id="btn-checkin" disabled class="w-full bg-indigo-600 text-white px-4 py-4 rounded-2xl font-bold shadow-lg disabled:bg-slate-200 disabled:shadow-none">ลงเวลาเข้างาน</button>
+                                <button onclick="app.handleCheckIn()" id="btn-checkin"
+                                    class="w-full bg-indigo-600 text-white px-4 py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-colors">ลงเวลาเข้างาน</button>
                             </div>
-                            <button onclick="app.toggleLateExcuseForm()" class="mt-4 text-sm text-slate-500 hover:text-indigo-600 underline">📝 ชี้แจงการมาสาย / ขอแก้ไขเวลา</button>
+                            <button onclick="app.toggleLateExcuseForm()"
+                                class="mt-4 text-sm text-slate-500 hover:text-indigo-600 underline">📝 ชี้แจงการมาสาย /
+                                ขอแก้ไขเวลา</button>
                         </div>
                         <div class="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
                             <h3 class="font-bold text-slate-800 mb-4">ข้อมูลพิกัด</h3>
                             <div class="space-y-3 text-sm">
-                                <div class="bg-slate-50 p-3 rounded-xl"><p class="text-xs text-slate-400">OFFICE</p><p class="font-mono">18.7225, 99.0255</p></div>
-                                <div class="bg-indigo-50 p-3 rounded-xl"><p class="text-xs text-indigo-400">YOU</p><p class="font-mono text-indigo-900" id="debug-loc">-</p></div>
+                                <div class="bg-slate-50 p-3 rounded-xl">
+                                    <p class="text-xs text-slate-400">OFFICE</p>
+                                    <p class="font-mono">18.7225, 99.0255</p>
+                                </div>
+                                <div class="bg-indigo-50 p-3 rounded-xl">
+                                    <p class="text-xs text-indigo-400">YOU</p>
+                                    <p class="font-mono text-indigo-900" id="debug-loc">-</p>
+                                </div>
                             </div>
-                            
+
                             <div class="mt-6 pt-6 border-t border-slate-100 text-xs text-slate-400 text-center">
                                 <i data-lucide="info" width="12" class="inline mr-1 align-text-top"></i>
                                 ต้องอยู่ภายในระยะ 1500 เมตร เพื่อเช็คอิน
@@ -727,12 +1081,15 @@
                 </div>
 
                 <!-- Leave Page (NEW) -->
-                <div id="page-leave" class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-leave"
+                    class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">☕ ขอลาหยุด</h2>
-                    
+
                     <!-- Leave Summary Cards (Dynamic Content via JS) -->
                     <div id="leave-summary-container" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                        <div class="col-span-3 text-center py-4"><div class="loader loader-dark"></div></div>
+                        <div class="col-span-3 text-center py-4">
+                            <div class="loader loader-dark"></div>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -741,7 +1098,8 @@
                             <form id="leave-form" class="space-y-4">
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">ประเภทการลา</label>
-                                    <select id="leave-type" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-sm">
+                                    <select id="leave-type"
+                                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 text-sm">
                                         <optgroup label="การลาทั่วไป">
                                             <option value="Sick">😷 ลาป่วย (30 วัน/ปี)</option>
                                             <option value="Personal">📝 ลากิจทั่วไป (6 วัน/ปี)</option>
@@ -758,30 +1116,36 @@
                                         </optgroup>
                                     </select>
                                 </div>
-                                
+
                                 <!-- Adjusted Date/Time Inputs -->
                                 <div class="grid grid-cols-2 gap-3">
                                     <div class="col-span-2">
                                         <label class="text-xs font-bold text-slate-500 uppercase">เริ่ม (Start)</label>
                                         <div class="flex gap-2">
-                                            <input type="date" id="leave-start-date" required class="w-2/3 px-3 py-2 bg-slate-50 border rounded-xl text-sm">
-                                            <input type="time" id="leave-start-time" value="09:30" required class="w-1/3 px-2 py-2 bg-slate-50 border rounded-xl text-sm text-center">
+                                            <input type="date" id="leave-start-date" required
+                                                class="w-2/3 px-3 py-2 bg-slate-50 border rounded-xl text-sm">
+                                            <input type="time" id="leave-start-time" value="09:30" required
+                                                class="w-1/3 px-2 py-2 bg-slate-50 border rounded-xl text-sm text-center">
                                         </div>
                                     </div>
                                     <div class="col-span-2">
                                         <label class="text-xs font-bold text-slate-500 uppercase">ถึง (End)</label>
                                         <div class="flex gap-2">
-                                            <input type="date" id="leave-end-date" required class="w-2/3 px-3 py-2 bg-slate-50 border rounded-xl text-sm">
-                                            <input type="time" id="leave-end-time" value="18:30" required class="w-1/3 px-2 py-2 bg-slate-50 border rounded-xl text-sm text-center">
+                                            <input type="date" id="leave-end-date" required
+                                                class="w-2/3 px-3 py-2 bg-slate-50 border rounded-xl text-sm">
+                                            <input type="time" id="leave-end-time" value="18:30" required
+                                                class="w-1/3 px-2 py-2 bg-slate-50 border rounded-xl text-sm text-center">
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
                                     <label class="text-xs font-bold text-slate-500 uppercase">เหตุผล</label>
-                                    <textarea id="leave-reason" placeholder="โปรดระบุรายละเอียด..." class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                                    <textarea id="leave-reason" placeholder="โปรดระบุรายละเอียด..."
+                                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
                                 </div>
-                                <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งใบลา</button>
+                                <button type="submit"
+                                    class="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งใบลา</button>
                             </form>
                         </div>
                         <div class="md:col-span-2">
@@ -794,14 +1158,21 @@
                 </div>
 
                 <!-- Admin Console (NEW) -->
-                <div id="page-admin" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                <div id="page-admin"
+                    class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
                     <h2 class="text-2xl font-bold text-slate-800">🛡️ ผู้ดูแลระบบ (Admin Console)</h2>
-                    
+
                     <!-- Tabs -->
                     <div class="flex gap-4 border-b border-slate-200 mb-6">
-                        <button onclick="app.showAdminTab('employees')" class="admin-tab text-indigo-600 border-b-2 border-indigo-600 font-medium px-4 py-2" id="tab-btn-employees">พนักงานทั้งหมด</button>
-                        <button onclick="app.showAdminTab('leaves')" class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2" id="tab-btn-leaves">อนุมัติการลา</button>
-                        <button onclick="app.showAdminTab('requests')" class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2" id="tab-btn-requests">คำชี้แจงเวลา</button>
+                        <button onclick="app.showAdminTab('employees')"
+                            class="admin-tab text-indigo-600 border-b-2 border-indigo-600 font-medium px-4 py-2"
+                            id="tab-btn-employees">พนักงานทั้งหมด</button>
+                        <button onclick="app.showAdminTab('leaves')"
+                            class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2"
+                            id="tab-btn-leaves">อนุมัติการลา</button>
+                        <button onclick="app.showAdminTab('requests')"
+                            class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2"
+                            id="tab-btn-requests">คำชี้แจงเวลา</button>
                     </div>
 
                     <!-- Employee Management -->
@@ -814,7 +1185,8 @@
                                             <th class="p-4 font-semibold text-slate-600">ชื่อ-นามสกุล</th>
                                             <th class="p-4 font-semibold text-slate-600">ตำแหน่ง</th>
                                             <th class="p-4 font-semibold text-slate-600">สิทธิ์ (Role)</th>
-                                            <th class="p-4 font-semibold text-slate-600">โควตาวันลา</th> <!-- Added Quota Column -->
+                                            <th class="p-4 font-semibold text-slate-600">โควตาวันลา</th>
+                                            <!-- Added Quota Column -->
                                             <th class="p-4 font-semibold text-slate-600 text-right">จัดการ</th>
                                         </tr>
                                     </thead>
@@ -868,21 +1240,26 @@
                 </div>
 
                 <!-- Report Page -->
-                <div id="page-report" class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 hidden page-transition bg-slate-50">
+                <div id="page-report"
+                    class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-8 hidden page-transition bg-slate-50">
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-2xl font-bold text-slate-800">📄 รายงานสรุปภาพรวม</h2>
                             <p class="text-slate-500 text-sm mt-1">สถิติการมาสายและการลาของพนักงาน</p>
                         </div>
-                        <button onclick="app.downloadCSV()" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-lg shadow-emerald-100 flex items-center gap-2 transition-transform active:scale-95">
+                        <button onclick="app.downloadCSV()"
+                            class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-emerald-700 shadow-lg shadow-emerald-100 flex items-center gap-2 transition-transform active:scale-95">
                             <i data-lucide="download" width="18"></i> <span class="hidden sm:inline">Download CSV</span>
                         </button>
                     </div>
 
                     <!-- Summary Cards Grid -->
-                    <div id="report-summary-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    <div id="report-summary-grid"
+                        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         <!-- JS renders employee summary cards here -->
-                        <div class="col-span-full text-center py-8"><div class="loader loader-dark"></div></div>
+                        <div class="col-span-full text-center py-8">
+                            <div class="loader loader-dark"></div>
+                        </div>
                     </div>
 
                     <div class="border-t border-slate-200 my-4"></div>
@@ -899,11 +1276,12 @@
 
             </div>
         </main>
-        
+
         <!-- Chat Widget (Moved inside app-view to hide on login) -->
         <div id="chat-widget" class="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 pointer-events-none">
             <!-- Chat Window -->
-            <div id="chat-window" class="hidden bg-white w-80 sm:w-96 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden pointer-events-auto chat-enter">
+            <div id="chat-window"
+                class="hidden bg-white w-80 sm:w-96 rounded-2xl shadow-2xl border border-slate-200 overflow-hidden pointer-events-auto chat-enter">
                 <div class="bg-indigo-600 p-4 text-white flex justify-between items-center">
                     <div class="flex items-center gap-3">
                         <div class="bg-white/20 p-1.5 rounded-lg"><i data-lucide="bot" width="20"></i></div>
@@ -912,14 +1290,19 @@
                             <p class="text-[10px] text-indigo-200">Online • ถามได้ทุกเรื่องงาน</p>
                         </div>
                     </div>
-                    <button onclick="app.toggleChat()" class="text-white/80 hover:text-white"><i data-lucide="x" width="18"></i></button>
+                    <button onclick="app.toggleChat()" class="text-white/80 hover:text-white"><i data-lucide="x"
+                            width="18"></i></button>
                 </div>
                 <div id="chat-messages" class="h-80 overflow-y-auto p-4 bg-slate-50 space-y-3 text-sm">
                     <!-- Messages will appear here -->
                     <div class="flex gap-3">
-                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0"><i data-lucide="bot" width="16"></i></div>
-                        <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700 leading-relaxed">
-                            <p>สวัสดีครับ ผมสกายเน็ต Agent ที่จะช่วยคุณให้ทำงานง่ายขึ้น มีข้อมูลอะไรให้ช่วยวิเคราะห์ไหมครับ? 🤖</p>
+                        <div
+                            class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="bot" width="16"></i></div>
+                        <div
+                            class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700 leading-relaxed">
+                            <p>สวัสดีครับ ผมสกายเน็ต Agent ที่จะช่วยคุณให้ทำงานง่ายขึ้น
+                                มีข้อมูลอะไรให้ช่วยวิเคราะห์ไหมครับ? 🤖</p>
                             <hr class="my-2 border-slate-100">
                             <p class="text-xs text-slate-500">ผมทำอะไรได้บ้าง:</p>
                             <ul class="list-disc list-inside text-xs text-slate-500 mt-1 space-y-1">
@@ -933,8 +1316,10 @@
                 </div>
                 <div class="p-3 bg-white border-t border-slate-100">
                     <form id="chat-form" class="flex gap-2">
-                        <input type="text" id="chat-input" placeholder="พิมพ์คำถามที่นี่..." class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
-                        <button type="submit" class="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors">
+                        <input type="text" id="chat-input" placeholder="พิมพ์คำถามที่นี่..."
+                            class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm">
+                        <button type="submit"
+                            class="bg-indigo-600 text-white p-2 rounded-xl hover:bg-indigo-700 transition-colors">
                             <i data-lucide="send" width="18"></i>
                         </button>
                     </form>
@@ -942,71 +1327,87 @@
             </div>
 
             <!-- Toggle Button -->
-            <button onclick="app.toggleChat()" class="bg-indigo-600 text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform active:scale-95 pointer-events-auto group relative">
+            <button onclick="app.toggleChat()"
+                class="bg-indigo-600 text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform active:scale-95 pointer-events-auto group relative">
                 <i data-lucide="message-circle" width="24"></i>
                 <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
         </div>
 
     </div>
-    
+
     <!-- Modals -->
     <!-- Edit Profile Modal -->
-    <div id="modal-edit-profile" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modal-edit-profile"
+        class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all scale-100">
             <h3 class="text-xl font-bold mb-4 text-slate-800">แก้ไขข้อมูลส่วนตัว</h3>
             <form id="form-edit-profile" class="space-y-4">
                 <div>
                     <label class="text-xs font-bold text-slate-500 uppercase">ชื่อ-นามสกุล</label>
-                    <input type="text" id="edit-profile-name" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="text" id="edit-profile-name"
+                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <!-- Position -->
                 <div>
                     <label class="text-xs font-bold text-slate-500 uppercase">ตำแหน่ง</label>
-                    <input type="text" id="edit-profile-position" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <input type="text" id="edit-profile-position"
+                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1 focus:ring-2 focus:ring-indigo-500 outline-none">
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="app.closeModal('modal-edit-profile')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">ยกเลิก</button>
-                    <button type="button" onclick="app.saveEditProfile()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100">บันทึก</button>
+                    <button type="button" onclick="app.closeModal('modal-edit-profile')"
+                        class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">ยกเลิก</button>
+                    <button type="button" onclick="app.saveEditProfile()"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100">บันทึก</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- User Tasks Modal -->
-    <div id="modal-user-tasks" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modal-user-tasks"
+        class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-slate-800"><i data-lucide="check-square" class="inline w-5 h-5 text-indigo-600 mr-2"></i>งานของ <span id="modal-task-username">...</span></h3>
-                <button onclick="app.closeModal('modal-user-tasks')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                <h3 class="text-xl font-bold text-slate-800"><i data-lucide="check-square"
+                        class="inline w-5 h-5 text-indigo-600 mr-2"></i>งานของ <span id="modal-task-username">...</span>
+                </h3>
+                <button onclick="app.closeModal('modal-user-tasks')" class="text-slate-400 hover:text-slate-600"><i
+                        data-lucide="x"></i></button>
             </div>
             <div id="modal-task-list" class="overflow-y-auto flex-1 space-y-3 pr-2">
                 <!-- Tasks go here -->
             </div>
         </div>
     </div>
-    
+
     <!-- Late Excuse Modal -->
-    <div id="modal-late-excuse" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modal-late-excuse"
+        class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl transform transition-all scale-100">
             <h3 class="text-xl font-bold mb-4 text-slate-800">แจ้งเหตุผลการมาสาย / ขอแก้ไขเวลา</h3>
             <form id="form-late-excuse" class="space-y-4">
                 <div>
                     <label class="text-xs font-bold text-slate-500 uppercase">วันที่ต้องการแก้ไข</label>
-                    <input type="date" id="excuse-date" required class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
+                    <input type="date" id="excuse-date" required
+                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1">
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-500 uppercase">เหตุผล / คำชี้แจง</label>
-                    <textarea id="excuse-reason" required placeholder="เช่น รถเสีย, มีธุระด่วน..." rows="3" class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
+                    <textarea id="excuse-reason" required placeholder="เช่น รถเสีย, มีธุระด่วน..." rows="3"
+                        class="w-full px-4 py-2 bg-slate-50 border rounded-xl mt-1"></textarea>
                 </div>
                 <div>
                     <label class="text-xs font-bold text-slate-500 uppercase">แนบรูปภาพ (ถ้ามี)</label>
-                    <input type="file" id="excuse-image" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mt-1">
+                    <input type="file" id="excuse-image" accept="image/*"
+                        class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mt-1">
                     <p class="text-[10px] text-slate-400 mt-1">*ระบบจะเก็บชื่อไฟล์เท่านั้นในเวอร์ชันนี้</p>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="app.closeModal('modal-late-excuse')" class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">ยกเลิก</button>
-                    <button type="button" onclick="app.submitLateExcuse()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งคำขอ</button>
+                    <button type="button" onclick="app.closeModal('modal-late-excuse')"
+                        class="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg">ยกเลิก</button>
+                    <button type="button" onclick="app.submitLateExcuse()"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100">ส่งคำขอ</button>
                 </div>
             </form>
         </div>
@@ -1066,7 +1467,7 @@
         const show = (id) => getEl(id)?.classList.remove('hidden');
         const hide = (id) => getEl(id)?.classList.add('hidden');
         const formatDate = (date) => new Date(date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
-        
+
         // SAFE EVENT LISTENER HELPER
         const bind = (id, event, handler) => {
             const el = document.getElementById(id);
@@ -1103,9 +1504,9 @@
             loadProfile: async () => {
                 try {
                     // Check if current user is Poomie (Force Admin)
-                    if(state.user.email === ADMIN_EMAIL) {
+                    if (state.user.email === ADMIN_EMAIL) {
                         const { data: p } = await db.from('profiles').select('role').eq('id', state.user.id).single();
-                        if(p && p.role !== 'admin') {
+                        if (p && p.role !== 'admin') {
                             await db.from('profiles').update({ role: 'admin' }).eq('id', state.user.id);
                         }
                     }
@@ -1117,10 +1518,10 @@
                     getEl('user-role').innerText = state.profile.role;
                     getEl('user-avatar').innerText = state.profile.name.charAt(0).toUpperCase();
                     document.querySelectorAll('.display-name').forEach(el => el.innerText = state.profile.name);
-                    
+
                     // Admin Menu Visibility
                     const adminMenu = getEl('menu-admin-section');
-                    if(state.profile.role === 'admin') {
+                    if (state.profile.role === 'admin') {
                         adminMenu.classList.remove('hidden');
                         getEl('btn-add-event').classList.remove('hidden');
                     }
@@ -1129,7 +1530,7 @@
                         getEl('btn-add-event').classList.add('hidden');
                     }
 
-                } catch(e) { console.log(e); }
+                } catch (e) { console.log(e); }
             },
             login: async (email, password) => {
                 const { error } = await db.auth.signInWithPassword({ email, password });
@@ -1141,11 +1542,11 @@
             },
             logout: async () => {
                 const btn = document.querySelector('#btn-logout');
-                if(btn) {
+                if (btn) {
                     btn.disabled = true;
-                    btn.innerHTML = '<div class="loader" style="border-color: #94a3b8; border-bottom-color: transparent;"></div>'; 
+                    btn.innerHTML = '<div class="loader" style="border-color: #94a3b8; border-bottom-color: transparent;"></div>';
                 }
-                
+
                 try {
                     await db.auth.signOut();
                 } catch (err) {
@@ -1173,28 +1574,28 @@
             navigate: (pageId) => {
                 document.querySelectorAll('.nav-item').forEach(el => el.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group");
                 const active = getEl(`nav-${pageId}`);
-                if(active) active.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-50 text-indigo-600 group";
-                
+                if (active) active.className = "nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all bg-indigo-50 text-indigo-600 group";
+
                 document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
                 const target = getEl(`page-${pageId}`);
-                if(target) {
+                if (target) {
                     target.classList.remove('hidden');
                     target.classList.remove('page-transition');
                     void target.offsetWidth;
                     target.classList.add('page-transition');
                 }
-                
+
                 // Load Page Data
-                if(pageId === 'dashboard') app.loadDashboard();
-                if(pageId === 'team') app.loadTeam();
-                if(pageId === 'projects') app.loadProjects();
-                if(pageId === 'tasks') { app.loadTasks(); app.loadTeam(); }
-                if(pageId === 'meetings') app.loadMeetings();
-                if(pageId === 'calendar') app.loadCalendar();
-                if(pageId === 'checkin') app.loadCheckin();
-                if(pageId === 'leave') app.loadLeaves();
-                if(pageId === 'admin') app.loadAdmin();
-                if(pageId === 'report') app.loadReport();
+                if (pageId === 'dashboard') app.loadDashboard();
+                if (pageId === 'team') app.loadTeam();
+                if (pageId === 'projects') app.loadProjects();
+                if (pageId === 'tasks') { app.loadTasks(); app.loadTeam(); }
+                if (pageId === 'meetings') app.loadMeetings();
+                if (pageId === 'calendar') app.loadCalendar();
+                if (pageId === 'checkin') app.loadCheckin();
+                if (pageId === 'leave') app.loadLeaves();
+                if (pageId === 'admin') app.loadAdmin();
+                if (pageId === 'report') app.loadReport();
 
                 // Mobile Sidebar
                 getEl('sidebar').classList.add('-translate-x-full');
@@ -1222,42 +1623,42 @@
 
                 const hour = new Date().getHours();
                 const sky = getEl('city-sky');
-                if(!sky) return;
-                
+                if (!sky) return;
+
                 sky.className = 'absolute inset-0 z-0 transition-colors duration-1000';
-                if(hour >= 5 && hour < 12) sky.classList.add('city-sky-morning');
-                else if(hour >= 12 && hour < 17) sky.classList.add('city-sky-afternoon');
-                else if(hour >= 17 && hour < 20) sky.classList.add('city-sky-evening');
+                if (hour >= 5 && hour < 12) sky.classList.add('city-sky-morning');
+                else if (hour >= 12 && hour < 17) sky.classList.add('city-sky-afternoon');
+                else if (hour >= 17 && hour < 20) sky.classList.add('city-sky-evening');
                 else sky.classList.add('city-sky-night');
             },
-            
+
             loadDashboard: async () => {
                 const { data } = await db.from('tasks').select('*');
                 state.tasks = data || [];
-                
+
                 const { data: leaves } = await db.from('leaves').select('*').eq('status', 'Approved');
                 state.leaves = leaves || [];
 
                 // ปรับแก้: แสดงเฉพาะงานที่ Assign ให้ตัวเองเท่านั้น (ตัดเงื่อนไข Admin ออก)
                 const myTasks = state.tasks.filter(t => t.assignee === state.profile.name);
-                
+
                 // City Stats (ยังคงใช้ภาพรวมทั้งบริษัท เพื่อให้เมืองดูคึกคัก)
                 const doneCount = state.tasks.filter(t => t.status === 'Done').length;
                 const progressCount = state.tasks.filter(t => t.status === 'In Progress').length;
                 const todoCount = state.tasks.filter(t => t.status === 'To Do').length;
-                
+
                 // Dashboard Stats (เฉพาะของตัวเอง)
                 const elTotal = getEl('dash-total-tasks');
-                if(elTotal) elTotal.innerText = myTasks.length;
+                if (elTotal) elTotal.innerText = myTasks.length;
 
                 const elPending = getEl('dash-pending-tasks');
-                if(elPending) elPending.innerText = myTasks.filter(t => t.status !== 'Done').length;
+                if (elPending) elPending.innerText = myTasks.filter(t => t.status !== 'Done').length;
 
                 const elRole = getEl('dash-role');
-                if(elRole) elRole.innerText = state.profile.role;
+                if (elRole) elRole.innerText = state.profile.role;
 
                 const elDate = getEl('current-date');
-                if(elDate) elDate.innerText = formatDate(new Date());
+                if (elDate) elDate.innerText = formatDate(new Date());
 
                 // Fetch Today's Attendance for Dashboard Card
                 const todayStr = new Date().toISOString().split('T')[0];
@@ -1268,11 +1669,11 @@
                 // Who's on Leave Today
                 const todaysLeaves = state.leaves.filter(l => l.date === todayStr);
                 const leaveListEl = getEl('dash-leave-list');
-                if(leaveListEl) {
-                    if(todaysLeaves.length === 0) {
+                if (leaveListEl) {
+                    if (todaysLeaves.length === 0) {
                         leaveListEl.innerHTML = `<div class="text-center text-slate-400 text-sm font-light"><p>🎉 วันนี้อยู่ครบทีม!</p><p class="text-xs mt-1">พร้อมหน้าพร้อมตา</p></div>`;
                     } else {
-                         leaveListEl.innerHTML = todaysLeaves.map(l => `
+                        leaveListEl.innerHTML = todaysLeaves.map(l => `
                             <div class="flex items-center gap-3 w-full bg-slate-50 p-2 rounded-xl">
                                 <div class="w-8 h-8 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-xs font-bold">${l.user_name.charAt(0)}</div>
                                 <div>
@@ -1286,21 +1687,21 @@
 
                 // Urgent Tasks
                 const deadlineListEl = getEl('dash-deadline-list');
-                if(deadlineListEl) {
+                if (deadlineListEl) {
                     // Filter tasks: Not Done, Deadline exists
                     const urgentTasks = myTasks
                         .filter(t => t.status !== 'Done' && t.deadline)
-                        .sort((a,b) => new Date(a.deadline) - new Date(b.deadline))
+                        .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
                         .slice(0, 5); // Take top 5
 
-                    if(urgentTasks.length === 0) {
+                    if (urgentTasks.length === 0) {
                         deadlineListEl.innerHTML = `<div class="text-center text-slate-400 text-sm font-light py-4">👍 ไม่มีงานด่วน</div>`;
                     } else {
                         deadlineListEl.innerHTML = urgentTasks.map(t => {
                             const daysLeft = Math.ceil((new Date(t.deadline) - new Date()) / (1000 * 60 * 60 * 24));
                             let badgeColor = 'bg-slate-100 text-slate-500';
                             let badgeText = `${daysLeft} วัน`;
-                            
+
                             if (daysLeft < 0) { badgeColor = 'bg-red-100 text-red-600'; badgeText = 'เกินกำหนด'; }
                             else if (daysLeft === 0) { badgeColor = 'bg-orange-100 text-orange-600'; badgeText = 'วันนี้'; }
                             else if (daysLeft <= 3) { badgeColor = 'bg-yellow-100 text-yellow-600'; }
@@ -1323,16 +1724,16 @@
                 const xp = doneCount % 5;
                 const nextLevelXp = 5;
                 const xpPercent = (xp / nextLevelXp) * 100;
-                
+
                 const elLevel = getEl('game-level');
-                if(elLevel) elLevel.innerText = level;
+                if (elLevel) elLevel.innerText = level;
 
                 const elXpVal = getEl('xp-val');
-                if(elXpVal) elXpVal.innerText = `${nextLevelXp - xp}`;
+                if (elXpVal) elXpVal.innerText = `${nextLevelXp - xp}`;
 
                 const elXpBar = getEl('xp-bar');
-                if(elXpBar) elXpBar.style.width = `${xpPercent}%`;
-                
+                if (elXpBar) elXpBar.style.width = `${xpPercent}%`;
+
                 // Render City
                 app.renderCity(doneCount, progressCount, todoCount);
                 lucide.createIcons();
@@ -1371,54 +1772,30 @@
 
             quickCheckAction: (mode) => {
                 if (mode === 'checkout') {
-                    // ไม่ต้อง confirm ตรงนี้ซ้ำ เพราะ handleCheckOut มี confirm เรื่องเวลาอยู่แล้ว
-                    app.handleCheckOut().then(() => app.loadDashboard()); 
+                    app.handleCheckOut().then(() => app.loadDashboard());
                 } else {
-                    // Check In Logic (Simplified for Quick Button)
-                    const btn = getEl('btn-dash-checkin');
-                    btn.innerHTML = '<div class="loader loader-dark" style="width:20px;height:20px;"></div>';
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        async (pos) => {
-                            const { latitude, longitude } = pos.coords;
-                            const R=6371e3, φ1=latitude*Math.PI/180, φ2=OFFICE_LOCATION.lat*Math.PI/180, Δφ=(OFFICE_LOCATION.lat-latitude)*Math.PI/180, Δλ=(OFFICE_LOCATION.lng-longitude)*Math.PI/180;
-                            const a=Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2, c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-                            const dist = Math.round(R*c);
-                            
-                            if (dist <= MAX_DIST) {
-                                await app.handleCheckIn();
-                                await app.loadDashboard(); // Refresh UI
-                                alert('✅ ลงเวลาเข้างานเรียบร้อย');
-                            } else {
-                                alert(`❌ คุณอยู่นอกพื้นที่ (${dist} ม.) กรุณาขยับเข้าใกล้ออฟฟิศ`);
-                                app.renderDashAttendance(); // Reset button
-                            }
-                        },
-                        (err) => {
-                            alert('⚠️ ไม่สามารถระบุตำแหน่งได้ กรุณาเปิด GPS');
-                            app.renderDashAttendance(); // Reset button
-                        }
-                    );
+                    // Check In Logic (Honor System)
+                    app.handleCheckIn().then(() => app.loadDashboard());
                 }
             },
-            
+
             renderCity: (done, progress, todo) => {
                 const container = getEl('city-container');
                 container.innerHTML = '';
-                
+
                 // Helper to create building element
                 const createBuilding = (type, delay) => {
                     const div = document.createElement('div');
                     div.className = 'relative flex flex-col items-center justify-end building-pop shrink-0';
                     div.style.animationDelay = `${delay}ms`;
-                    
+
                     let content = '';
-                    if(type === 'done') {
+                    if (type === 'done') {
                         // Random skyscraper or house
                         const size = Math.random() > 0.7 ? 'h-32 w-16' : 'h-16 w-12';
                         const color = Math.random() > 0.5 ? 'bg-indigo-500' : 'bg-blue-500';
                         const windows = Math.random() > 0.5 ? 'bg-yellow-200' : 'bg-blue-200';
-                        
+
                         // Simple CSS Building
                         content = `
                             <div class="${size} ${color} rounded-t-lg shadow-lg relative border-2 border-white/20 transition-all hover:scale-105 hover:z-10 cursor-pointer">
@@ -1449,23 +1826,23 @@
                             </div>
                         `;
                     }
-                    
+
                     div.innerHTML = content;
                     return div;
                 };
-                
+
                 // Add elements
                 let delay = 0;
-                for(let i=0; i<done; i++) {
+                for (let i = 0; i < done; i++) {
                     container.appendChild(createBuilding('done', delay));
                     delay += 50;
                 }
-                for(let i=0; i<progress; i++) {
+                for (let i = 0; i < progress; i++) {
                     container.appendChild(createBuilding('progress', delay));
                     delay += 50;
                 }
                 // Limit todo items visually so it doesn't clutter too much
-                for(let i=0; i<Math.min(todo, 5); i++) {
+                for (let i = 0; i < Math.min(todo, 5); i++) {
                     container.appendChild(createBuilding('todo', delay));
                     delay += 50;
                 }
@@ -1475,16 +1852,16 @@
             loadTeam: async () => {
                 const { data } = await db.from('profiles').select('*');
                 state.team = data || [];
-                
+
                 const list = getEl('team-list');
-                if(list) {
+                if (list) {
                     list.innerHTML = state.team.map((p, index) => {
-    // Maybe vary sizes for "Bento" feel? 
-    // It's risky without knowing content length. Let's keep them uniform but styled well.
-    // Or maybe span 2 columns for the first item (e.g. the user or admin)?
-    const isBig = index === 0; // Just for fun, make the first one bigger? No, might look weird if sorted alphabetically.
-    
-    return `
+                        // Maybe vary sizes for "Bento" feel? 
+                        // It's risky without knowing content length. Let's keep them uniform but styled well.
+                        // Or maybe span 2 columns for the first item (e.g. the user or admin)?
+                        const isBig = index === 0; // Just for fun, make the first one bigger? No, might look weird if sorted alphabetically.
+
+                        return `
     <div class="bento-card bg-white p-5 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-4 relative overflow-hidden group">
         <!-- Decor BG -->
         <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-slate-50 to-slate-100 rounded-bl-full -z-0 opacity-50 transition-transform group-hover:scale-110"></div>
@@ -1518,55 +1895,55 @@
         </div>
     </div>
     `;
-}).join('');
+                    }).join('');
                 }
 
                 const selects = document.querySelectorAll('#task-assignee');
                 selects.forEach(sel => {
                     const current = sel.value;
-                    sel.innerHTML = '<option value="">เลือกพนักงาน...</option>' + 
+                    sel.innerHTML = '<option value="">เลือกพนักงาน...</option>' +
                         state.team.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-                    if(current) sel.value = current;
+                    if (current) sel.value = current;
                 });
             },
-            
+
             // Delete Employee
             deleteEmployee: async (id) => {
-                if(!confirm('ยืนยันลบพนักงานคนนี้ออกจากระบบ? ข้อมูลการลาและงานที่มอบหมายอาจได้รับผลกระทบ')) return;
-                
+                if (!confirm('ยืนยันลบพนักงานคนนี้ออกจากระบบ? ข้อมูลการลาและงานที่มอบหมายอาจได้รับผลกระทบ')) return;
+
                 try {
                     const { error } = await db.from('profiles').delete().eq('id', id);
-                    if(error) throw error;
-                    
+                    if (error) throw error;
+
                     alert('ลบพนักงานเรียบร้อย');
                     app.loadTeam(); // Reload list
                     // Note: This only deletes from public.profiles table. 
                     // The Auth User remains but without profile they can't effectively use the app.
-                } catch(err) {
+                } catch (err) {
                     alert('เกิดข้อผิดพลาดในการลบ: ' + err.message);
                 }
             },
-            
+
             // View Tasks Modal
             viewUserTasks: async (userName) => {
                 // Ensure tasks are loaded
-                if(state.tasks.length === 0) {
+                if (state.tasks.length === 0) {
                     const { data } = await db.from('tasks').select('*');
                     state.tasks = data || [];
                 }
-                
+
                 const userTasks = state.tasks.filter(t => t.assignee === userName);
                 getEl('modal-task-username').innerText = userName;
-                
+
                 const list = getEl('modal-task-list');
-                if(userTasks.length === 0) {
+                if (userTasks.length === 0) {
                     list.innerHTML = `<div class="text-center p-8 text-slate-400 bg-slate-50 rounded-xl">ไม่มีงานที่ได้รับมอบหมาย</div>`;
                 } else {
                     list.innerHTML = userTasks.map(t => {
                         let statusColor = 'bg-slate-100 text-slate-600';
-                        if(t.status === 'In Progress') statusColor = 'bg-blue-50 text-blue-600';
-                        if(t.status === 'Done') statusColor = 'bg-green-50 text-green-600';
-                        
+                        if (t.status === 'In Progress') statusColor = 'bg-blue-50 text-blue-600';
+                        if (t.status === 'Done') statusColor = 'bg-green-50 text-green-600';
+
                         return `
                         <div class="p-3 border border-slate-100 rounded-xl hover:bg-slate-50">
                             <div class="flex justify-between items-start mb-1">
@@ -1579,11 +1956,11 @@
                         `;
                     }).join('');
                 }
-                
+
                 show('modal-user-tasks');
                 lucide.createIcons();
             },
-            
+
             // Edit Profile
             openEditProfile: () => {
                 getEl('edit-profile-name').value = state.profile.name;
@@ -1593,37 +1970,37 @@
             saveEditProfile: async () => {
                 const newName = getEl('edit-profile-name').value.trim();
                 const newPos = getEl('edit-profile-position').value.trim();
-                
-                if(!newName) return alert('กรุณากรอกชื่อ');
-                
+
+                if (!newName) return alert('กรุณากรอกชื่อ');
+
                 try {
-                    const { error } = await db.from('profiles').update({ 
+                    const { error } = await db.from('profiles').update({
                         name: newName,
-                        position: newPos 
+                        position: newPos
                     }).eq('id', state.user.id);
-                    
-                    if(error) throw error;
-                    
+
+                    if (error) throw error;
+
                     // Update Local State
                     state.profile.name = newName;
                     state.profile.position = newPos;
-                    
+
                     // Update UI
                     getEl('user-name').innerText = newName;
                     document.querySelectorAll('.display-name').forEach(el => el.innerText = newName);
                     getEl('user-avatar').innerText = newName.charAt(0).toUpperCase();
-                    
+
                     app.closeModal('modal-edit-profile');
                     alert('บันทึกข้อมูลเรียบร้อย');
-                } catch(err) {
+                } catch (err) {
                     alert('เกิดข้อผิดพลาด: ' + err.message);
                 }
             },
-            
+
             closeModal: (id) => {
                 hide(id);
             },
-            
+
             // Late Excuse
             toggleLateExcuseForm: () => {
                 show('modal-late-excuse');
@@ -1634,9 +2011,9 @@
                 const date = getEl('excuse-date').value;
                 const reason = getEl('excuse-reason').value;
                 const imageFile = getEl('excuse-image').files[0];
-                
+
                 if (!date || !reason) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-                
+
                 // For demo/prototype without Storage setup, we'll store filename
                 const imageUrl = imageFile ? `[File: ${imageFile.name}]` : '';
 
@@ -1649,16 +2026,16 @@
                         image_url: imageUrl,
                         status: 'Pending'
                     });
-                    
+
                     if (error) throw error;
-                    
+
                     alert('ส่งคำชี้แจงเรียบร้อยแล้ว');
                     app.closeModal('modal-late-excuse');
-                } catch(err) {
+                } catch (err) {
                     alert('เกิดข้อผิดพลาด: ' + err.message);
                 }
             },
-            
+
             // CHATBOT
             toggleChat: () => {
                 const chatWindow = getEl('chat-window');
@@ -1670,12 +2047,12 @@
                     chatMsgs.scrollTop = chatMsgs.scrollHeight;
                 }
             },
-            
+
             addChatMessage: (text, isUser = false) => {
                 const chatMsgs = getEl('chat-messages');
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `flex gap-3 ${isUser ? 'justify-end' : ''}`;
-                
+
                 if (isUser) {
                     msgDiv.innerHTML = `
                         <div class="bg-indigo-600 p-3 rounded-2xl rounded-tr-none shadow-sm text-white max-w-[80%]">
@@ -1690,7 +2067,7 @@
                         </div>
                     `;
                 }
-                
+
                 chatMsgs.appendChild(msgDiv);
                 chatMsgs.scrollTop = chatMsgs.scrollHeight;
                 lucide.createIcons();
@@ -1729,7 +2106,7 @@
                 // Format data for prompt
                 const today = new Date().toISOString().split('T')[0];
                 const currentUser = state.profile.name;
-                
+
                 const taskStr = state.tasks.map(t => `- Task: ${t.title} (Assignee: ${t.assignee}, Status: ${t.status}, Deadline: ${t.deadline || 'None'})`).join('\n');
                 const teamStr = state.team.map(p => `- ${p.name} (${p.position || p.role})`).join('\n');
                 const leaveStr = state.leaves.filter(l => l.date >= today).map(l => `- ${l.user_name} on leave ${l.date} (${l.type})`).join('\n');
@@ -1798,7 +2175,7 @@ ${meetingStr}
 
                 try {
                     const contextData = await app.getSystemContext();
-                    
+
                     const prompt = `
 You are 'Skynet', a friendly and witty AI Agent for 'Fortal Interactive'.
 Your personality: Casual, concise, helpful, and fun. Like a smart colleague sitting next desk.
@@ -1832,14 +2209,14 @@ SKYNET:
                     });
 
                     const data = await response.json();
-                    
+
                     // Check if there's an error in the response
                     if (data.error) {
                         throw new Error(data.error.message);
                     }
 
                     const aiText = data.candidates[0].content.parts[0].text;
-                    
+
                     app.hideTyping();
 
                     // Check for Command Block
@@ -1864,17 +2241,17 @@ SKYNET:
                     app.hideTyping();
                     // Show specific error if possible to help debug
                     if (err.message.includes('User location is not supported')) {
-                         app.addChatMessage("ขออภัยครับ พื้นที่ของคุณยังไม่รองรับการใช้งาน AI ในขณะนี้ (Region restriction) 😥");
+                        app.addChatMessage("ขออภัยครับ พื้นที่ของคุณยังไม่รองรับการใช้งาน AI ในขณะนี้ (Region restriction) 😥");
                     } else {
-                         app.addChatMessage("ระบบขัดข้องชั่วคราวครับ (อาจเกิดจาก API Key หรือการเชื่อมต่อ) ลองใหม่อีกครั้งนะครับ 🤖❌");
+                        app.addChatMessage("ระบบขัดข้องชั่วคราวครับ (อาจเกิดจาก API Key หรือการเชื่อมต่อ) ลองใหม่อีกครั้งนะครับ 🤖❌");
                     }
                 }
             },
-            
+
             executeAgentCommand: async (cmd) => {
                 if (cmd.action === 'LEAVE') {
                     const { type, date, reason } = cmd.data;
-                    
+
                     // Confirm with user (simulated via chat message first)
                     app.addChatMessage(`โอเคครับ ผมกำลังทำเรื่อง **${type}** ให้สำหรับวันที่ **${formatDate(date)}** เหตุผล: ${reason || '-'} ...กำลังบันทึกข้อมูลครับ 💾`);
 
@@ -1882,12 +2259,12 @@ SKYNET:
                         const { error } = await db.from('leaves').insert({
                             user_id: state.user.id,
                             user_name: state.profile.name,
-                            type: type, 
-                            date: date, 
-                            reason: reason, 
+                            type: type,
+                            date: date,
+                            reason: reason,
                             status: 'Pending'
                         });
-                        
+
                         if (error) throw error;
 
                         setTimeout(() => {
@@ -1900,14 +2277,14 @@ SKYNET:
                     }
                 }
             },
-            
+
             // QUOTA MANAGEMENT
             updateQuota: async (id, value) => {
                 try {
                     const { error } = await db.from('profiles').update({ leave_quota: value }).eq('id', id);
                     if (error) throw error;
                     // Optional: Show success toast
-                } catch(err) {
+                } catch (err) {
                     alert("อัปเดตโควตาไม่สำเร็จ: " + err.message);
                 }
             },
@@ -1915,7 +2292,7 @@ SKYNET:
             // ADMIN CONSOLE
             loadAdmin: async () => {
                 await app.loadTeam(); // Get latest profiles
-                
+
                 // Employees
                 const empList = getEl('admin-employee-list');
                 empList.innerHTML = state.team.map(p => `
@@ -1944,7 +2321,7 @@ SKYNET:
                 // Leaves
                 const { data: leaves } = await db.from('leaves').select('*').eq('status', 'Pending').order('date', { ascending: false });
                 const leaveList = getEl('admin-leave-list');
-                if(leaves.length === 0) {
+                if (leaves.length === 0) {
                     leaveList.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่มีรายการลาที่รออนุมัติ</td></tr>';
                 } else {
                     leaveList.innerHTML = leaves.map(l => `
@@ -1965,7 +2342,7 @@ SKYNET:
                 // Requests
                 const { data: requests } = await db.from('attendance_requests').select('*').eq('status', 'Pending').order('created_at', { ascending: false });
                 const requestList = getEl('admin-request-list');
-                if(requests.length === 0) {
+                if (requests.length === 0) {
                     requestList.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่มีรายการคำชี้แจงใหม่</td></tr>';
                 } else {
                     requestList.innerHTML = requests.map(r => `
@@ -1982,7 +2359,7 @@ SKYNET:
                         </tr>
                     `).join('');
                 }
-                
+
                 lucide.createIcons();
             },
             showAdminTab: (tabName) => {
@@ -1991,7 +2368,7 @@ SKYNET:
                     el.classList.remove('text-indigo-600', 'border-indigo-600');
                     el.classList.add('text-slate-500', 'border-transparent');
                 });
-                
+
                 getEl(`admin-${tabName}`).classList.remove('hidden');
                 getEl(`tab-btn-${tabName}`).classList.add('text-indigo-600', 'border-indigo-600');
                 getEl(`tab-btn-${tabName}`).classList.remove('text-slate-500', 'border-transparent');
@@ -2037,7 +2414,7 @@ SKYNET:
             toggleProjectForm: () => {
                 const form = getEl('project-form-container');
                 form.classList.toggle('hidden');
-                if(!form.classList.contains('hidden')) {
+                if (!form.classList.contains('hidden')) {
                     getEl('add-project-form').reset();
                     getEl('edit-project-id').value = '';
                 }
@@ -2047,14 +2424,14 @@ SKYNET:
                 getEl('edit-project-id').value = id;
                 getEl('project-name').value = name;
                 getEl('project-desc').value = desc;
-                window.scrollTo(0,0);
+                window.scrollTo(0, 0);
             },
             saveProject: async () => {
                 const id = getEl('edit-project-id').value;
                 const name = getEl('project-name').value;
                 const description = getEl('project-desc').value;
-                
-                if(id) {
+
+                if (id) {
                     await db.from('projects').update({ name, description }).eq('id', id);
                 } else {
                     await db.from('projects').insert({ name, description, created_by: state.user.id });
@@ -2063,7 +2440,7 @@ SKYNET:
                 app.loadProjects();
             },
             deleteProject: async (id) => {
-                if(!confirm('ยืนยันลบโปรเจกต์นี้?')) return;
+                if (!confirm('ยืนยันลบโปรเจกต์นี้?')) return;
                 await db.from('projects').delete().eq('id', id);
                 app.loadProjects();
             },
@@ -2084,7 +2461,7 @@ SKYNET:
                     if (cols[status]) {
                         counts[status]++;
                         const deadlineHtml = task.deadline ? `<span class="flex items-center gap-1 ${new Date(task.deadline) < new Date() && status !== 'Done' ? 'text-red-500 font-bold' : ''}"><i data-lucide="calendar" width="10"></i> ${formatDate(task.deadline)}</span>` : '';
-                        
+
                         cols[status].innerHTML += `
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all group relative">
                                 <div class="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -2106,17 +2483,17 @@ SKYNET:
                         `;
                     }
                 });
-                
+
                 Object.keys(counts).forEach(k => {
                     const el = getEl(`count-${k.toLowerCase().replace(' ', '-')}`);
-                    if(el) el.innerText = counts[k];
+                    if (el) el.innerText = counts[k];
                 });
                 lucide.createIcons();
             },
             toggleTaskForm: () => {
                 const form = getEl('task-form-container');
                 form.classList.toggle('hidden');
-                if(!form.classList.contains('hidden')) {
+                if (!form.classList.contains('hidden')) {
                     getEl('add-task-form').reset();
                     getEl('edit-task-id').value = '';
                 }
@@ -2128,7 +2505,7 @@ SKYNET:
                 getEl('task-desc').value = desc || '';
                 getEl('task-assignee').value = assignee;
                 getEl('task-deadline').value = deadline;
-                window.scrollTo(0,0);
+                window.scrollTo(0, 0);
             },
             saveTask: async () => {
                 const id = getEl('edit-task-id').value;
@@ -2137,7 +2514,7 @@ SKYNET:
                 const assignee = getEl('task-assignee').value;
                 const deadline = getEl('task-deadline').value || null;
 
-                if(id) {
+                if (id) {
                     await db.from('tasks').update({ title, description: desc, assignee, deadline }).eq('id', id);
                 } else {
                     await db.from('tasks').insert({ title, description: desc, assignee, deadline, status: 'To Do', created_by: state.user.id });
@@ -2151,12 +2528,12 @@ SKYNET:
                 app.loadTasks();
             },
             deleteTask: async (id) => {
-                if(!confirm('ยืนยันลบงานนี้?')) return;
+                if (!confirm('ยืนยันลบงานนี้?')) return;
                 await db.from('tasks').delete().eq('id', id);
                 app.loadTasks();
             },
             clearDoneTasks: async () => {
-                if(!confirm('ยืนยันลบงานที่เสร็จแล้ว (Done) ทั้งหมด?')) return;
+                if (!confirm('ยืนยันลบงานที่เสร็จแล้ว (Done) ทั้งหมด?')) return;
                 await db.from('tasks').delete().eq('status', 'Done');
                 app.loadTasks();
             },
@@ -2166,7 +2543,7 @@ SKYNET:
             calculateDuration: (startDate, endDate, startTime, endTime) => {
                 const start = new Date(`${startDate}T${startTime}`);
                 const end = new Date(`${endDate}T${endTime}`);
-                
+
                 if (start >= end) return 0;
 
                 // Simple logic for same day
@@ -2178,7 +2555,7 @@ SKYNET:
                     // สมมติพัก 12:00 - 13:00
                     const lunchStart = new Date(`${startDate}T12:00`);
                     const lunchEnd = new Date(`${startDate}T13:00`);
-                    
+
                     // กรณีลาคร่อมช่วงพักเที่ยง ให้หักออก 1 ชม.
                     if (start < lunchEnd && end > lunchStart) {
                         // คำนวณส่วนที่ซ้อนทับกับเวลาพัก
@@ -2186,17 +2563,17 @@ SKYNET:
                         const overlapEnd = end > lunchEnd ? lunchEnd : end;
                         const overlapMs = overlapEnd - overlapStart;
                         const overlapHrs = overlapMs / (1000 * 60 * 60);
-                        
+
                         diffHrs -= overlapHrs;
                     }
 
                     // สูตรคำนวณ: จำนวนชั่วโมงทำงาน / 8
                     let days = diffHrs / 8;
-                    
+
                     // ปัดเศษให้สวยงาม (เช่น 3.99 ชม -> 0.5 วัน)
                     // ถ้าลา >= 4 ชม. แต่น้อยกว่า 8 ให้เป็น 0.5 (ครึ่งวัน) หรือตามจริง
                     // ตาม Requirement: "ลาครึ่งวัน ลด 0.5" -> 4 ชม. = 0.5 วัน
-                    
+
                     return parseFloat(days.toFixed(2));
                 } else {
                     // Multi-day: นับตามวันไปก่อนสำหรับเวอร์ชันนี้ (เพื่อความง่าย)
@@ -2205,45 +2582,45 @@ SKYNET:
                     const sDay = new Date(startDate);
                     const eDay = new Date(endDate);
                     const dayDiff = Math.round(Math.abs((eDay - sDay) / oneDay));
-                    return dayDiff + 1; 
+                    return dayDiff + 1;
                 }
             },
 
             loadLeaves: async () => {
                 const { data } = await db.from('leaves').select('*').order('date', { ascending: false });
                 state.leaves = data || [];
-                
+
                 // 1. Calculate Quotas & Usage
                 const myApprovedLeaves = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
-                
+
                 const usage = {
                     Sick: 0,
                     Personal: 0,
                     Vacation: 0
                 };
-                
+
                 myApprovedLeaves.forEach(l => {
                     // ใช้ฟังก์ชันคำนวณวัน
                     let days = app.calculateDuration(
-                        l.date, 
-                        l.end_date || l.date, 
-                        l.start_time || '09:30', 
+                        l.date,
+                        l.end_date || l.date,
+                        l.start_time || '09:30',
                         l.end_time || '18:30'
                     );
-                    
+
                     if (usage[l.type] !== undefined) {
                         usage[l.type] += days;
                     }
                 });
 
                 // Get Quotas
-                const quotaVacation = state.profile.leave_quota || 6; 
-                const quotaPersonal = 6; 
-                const quotaSick = 30; 
+                const quotaVacation = state.profile.leave_quota || 6;
+                const quotaPersonal = 6;
+                const quotaSick = 30;
 
                 // 2. Render Summary Cards
                 const summaryContainer = getEl('leave-summary-container');
-                
+
                 // Helper to format number
                 const fmt = (n) => Number(n).toFixed(2).replace('.00', '');
 
@@ -2276,16 +2653,16 @@ SKYNET:
                 // 3. Render List (Only My Leaves)
                 const myLeavesHistory = state.leaves.filter(l => l.user_id === state.user.id);
                 const list = getEl('leave-list');
-                
+
                 if (myLeavesHistory.length === 0) {
                     list.innerHTML = `<div class="text-center p-8 text-slate-400 font-light border-2 border-dashed border-slate-100 rounded-2xl">ไม่มีประวัติการลา</div>`;
                 } else {
                     list.innerHTML = myLeavesHistory.map(l => {
                         let statusColor = 'bg-slate-100 text-slate-500';
                         let icon = 'clock';
-                        if(l.status === 'Approved') { statusColor = 'bg-green-100 text-green-700'; icon = 'check-circle'; }
-                        if(l.status === 'Rejected') { statusColor = 'bg-red-100 text-red-700'; icon = 'x-circle'; }
-                        if(l.status === 'Pending') { statusColor = 'bg-yellow-100 text-yellow-700'; icon = 'clock'; }
+                        if (l.status === 'Approved') { statusColor = 'bg-green-100 text-green-700'; icon = 'check-circle'; }
+                        if (l.status === 'Rejected') { statusColor = 'bg-red-100 text-red-700'; icon = 'x-circle'; }
+                        if (l.status === 'Pending') { statusColor = 'bg-yellow-100 text-yellow-700'; icon = 'clock'; }
 
                         const typeMap = {
                             'Sick': 'ลาป่วย', 'Personal': 'ลากิจ', 'Vacation': 'พักร้อน',
@@ -2293,24 +2670,24 @@ SKYNET:
                             'Maternity': 'ลาคลอด', 'Sterilization': 'ทำหมัน', 'Training': 'ฝึกอบรม', 'Military': 'เกณฑ์ทหาร', 'Other': 'อื่นๆ'
                         };
                         const typeLabel = typeMap[l.type] || l.type;
-                        
+
                         let dateDisplay = formatDate(l.date);
                         if (l.end_date && l.end_date !== l.date) {
                             dateDisplay += ` - ${formatDate(l.end_date)}`;
                         }
-                        
+
                         let timeDisplay = "";
                         if (l.start_time && l.end_time) {
-                             const s = l.start_time.slice(0,5);
-                             const e = l.end_time.slice(0,5);
-                             // คำนวณวันโชว์ใน List ด้วย
-                             const days = app.calculateDuration(l.date, l.end_date || l.date, l.start_time, l.end_time);
-                             
-                             if (s !== '09:30' || e !== '18:30') { 
-                                 timeDisplay = `<span class="text-[10px] bg-slate-100 px-1 rounded ml-1 text-slate-500">${s}-${e} (${days} วัน)</span>`;
-                             } else {
-                                 timeDisplay = `<span class="text-[10px] bg-slate-50 px-1 rounded ml-1 text-slate-400">(${days} วัน)</span>`;
-                             }
+                            const s = l.start_time.slice(0, 5);
+                            const e = l.end_time.slice(0, 5);
+                            // คำนวณวันโชว์ใน List ด้วย
+                            const days = app.calculateDuration(l.date, l.end_date || l.date, l.start_time, l.end_time);
+
+                            if (s !== '09:30' || e !== '18:30') {
+                                timeDisplay = `<span class="text-[10px] bg-slate-100 px-1 rounded ml-1 text-slate-500">${s}-${e} (${days} วัน)</span>`;
+                            } else {
+                                timeDisplay = `<span class="text-[10px] bg-slate-50 px-1 rounded ml-1 text-slate-400">(${days} วัน)</span>`;
+                            }
                         }
 
                         return `
@@ -2340,13 +2717,13 @@ SKYNET:
                 const endDate = getEl('leave-end-date').value;
                 const endTime = getEl('leave-end-time').value;
                 const reason = getEl('leave-reason').value;
-                
-                if(!startDate || !endDate) return alert('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด');
-                if(new Date(startDate) > new Date(endDate)) return alert('วันที่เริ่มต้นต้องมาก่อนวันที่สิ้นสุด');
+
+                if (!startDate || !endDate) return alert('กรุณาเลือกวันที่เริ่มต้นและสิ้นสุด');
+                if (new Date(startDate) > new Date(endDate)) return alert('วันที่เริ่มต้นต้องมาก่อนวันที่สิ้นสุด');
 
                 // คำนวณวันที่จะขอลารอบนี้
                 const requestingDays = app.calculateDuration(startDate, endDate, startTime, endTime);
-                
+
                 if (requestingDays <= 0) return alert('ช่วงเวลาไม่ถูกต้อง (0 วัน)');
 
                 // Check Quota
@@ -2355,14 +2732,14 @@ SKYNET:
                 myApprovedLeaves.forEach(l => {
                     usedDays += app.calculateDuration(l.date, l.end_date || l.date, l.start_time || '09:30', l.end_time || '18:30');
                 });
-                
-                let quota = 999; 
+
+                let quota = 999;
                 let typeName = type;
 
                 if (type === 'Sick') { quota = 30; typeName = 'ลาป่วย'; }
                 else if (type === 'Personal') { quota = 6; typeName = 'ลากิจ'; }
                 else if (type === 'Vacation') { quota = state.profile.leave_quota || 6; typeName = 'ลาพักร้อน'; }
-                
+
                 if (usedDays + requestingDays > quota) {
                     return alert(`สิทธิ์ "${typeName}" ของคุณไม่พอ (เหลือ ${Number(quota - usedDays).toFixed(2)} วัน, ขอลา ${requestingDays} วัน)`);
                 }
@@ -2370,16 +2747,16 @@ SKYNET:
                 const { error } = await db.from('leaves').insert({
                     user_id: state.user.id,
                     user_name: state.profile.name,
-                    type, 
+                    type,
                     date: startDate,
                     end_date: endDate,
                     start_time: startTime,
                     end_time: endTime,
-                    reason, 
+                    reason,
                     status: 'Pending'
                 });
-                
-                if(error) alert(error.message);
+
+                if (error) alert(error.message);
                 else {
                     alert(`ส่งใบลาเรียบร้อย (${requestingDays} วัน) รอหัวหน้าอนุมัติครับ`);
                     getEl('leave-form').reset();
@@ -2392,18 +2769,18 @@ SKYNET:
 
             // CALENDAR
             loadCalendar: async () => {
-                if(state.leaves.length === 0) await app.loadLeaves();
-                if(state.tasks.length === 0) await app.loadTasks();
-                
+                if (state.leaves.length === 0) await app.loadLeaves();
+                if (state.tasks.length === 0) await app.loadTasks();
+
                 // Fetch calendar events from DB and merge with default holidays
                 const { data } = await db.from('calendar_events').select('*');
                 if (data && data.length > 0) {
                     // Combine DB events with default holidays (avoiding duplicates if logic needed, simple concat here)
-                    const dbEvents = data.map(e => ({...e, fromDb: true}));
+                    const dbEvents = data.map(e => ({ ...e, fromDb: true }));
                     // Keep default holidays but allow DB to override/add
-                    state.calendarEvents = [...state.calendarEvents.filter(e => !e.fromDb), ...dbEvents]; 
+                    state.calendarEvents = [...state.calendarEvents.filter(e => !e.fromDb), ...dbEvents];
                 }
-                
+
                 app.renderCalendar();
             },
             changeMonth: (delta) => {
@@ -2413,27 +2790,27 @@ SKYNET:
             renderCalendar: () => {
                 const year = state.currentMonth.getFullYear();
                 const month = state.currentMonth.getMonth();
-                
+
                 getEl('calendar-month-year').innerText = state.currentMonth.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
-                
+
                 const firstDay = new Date(year, month, 1);
                 const lastDay = new Date(year, month + 1, 0);
                 const daysInMonth = lastDay.getDate();
                 const startDayOfWeek = firstDay.getDay(); // 0 = Sun
-                
+
                 const grid = getEl('calendar-grid');
                 grid.innerHTML = '';
 
                 // Empty slots
-                for(let i=0; i<startDayOfWeek; i++) {
+                for (let i = 0; i < startDayOfWeek; i++) {
                     grid.innerHTML += `<div class="h-24 bg-slate-50/50 rounded-xl"></div>`;
                 }
 
                 // Days
-                for(let d=1; d<=daysInMonth; d++) {
-                    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                     const isToday = new Date().toISOString().split('T')[0] === dateStr;
-                    
+
                     // Find events
                     const dayLeaves = state.leaves.filter(l => l.date === dateStr && l.status === 'Approved');
                     const dayDeadlines = state.tasks.filter(t => t.deadline === dateStr);
@@ -2453,7 +2830,7 @@ SKYNET:
 
                     // Leaves
                     dayLeaves.forEach(l => dots += `<div class="text-[10px] bg-red-100 text-red-600 px-1 rounded mt-1 truncate">${l.user_name.split(' ')[0]} ลา</div>`);
-                    
+
                     // Deadlines
                     dayDeadlines.forEach(t => dots += `<div class="text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded mt-1 truncate">ส่ง: ${t.title}</div>`);
 
@@ -2471,7 +2848,7 @@ SKYNET:
             toggleEventForm: () => {
                 const form = getEl('event-form-container');
                 form.classList.toggle('hidden');
-                if(!form.classList.contains('hidden')) {
+                if (!form.classList.contains('hidden')) {
                     getEl('add-event-form').reset();
                 }
             },
@@ -2480,21 +2857,21 @@ SKYNET:
                 const date = getEl('event-date').value;
                 const type = getEl('event-type').value;
 
-                if(!title || !date) return alert('กรุณากรอกข้อมูลให้ครบ');
+                if (!title || !date) return alert('กรุณากรอกข้อมูลให้ครบ');
 
                 try {
                     const { error } = await db.from('calendar_events').insert({
                         title, date, type, created_by: state.user.id
                     });
-                    if(error) throw error;
-                    
+                    if (error) throw error;
+
                     // Refresh
                     const { data } = await db.from('calendar_events').select('*');
                     state.calendarEvents = data || [];
                     app.renderCalendar();
                     app.toggleEventForm();
 
-                } catch(err) {
+                } catch (err) {
                     alert('บันทึกไม่สำเร็จ: ' + err.message);
                 }
             },
@@ -2544,7 +2921,7 @@ SKYNET:
                 const title = getEl('meeting-title').value.trim();
                 const date = getEl('meeting-date').value;
                 const summary = getEl('meeting-summary').value.trim();
-                
+
                 if (!title || !date || !summary) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
 
                 const { error } = await db.from('meetings').insert({
@@ -2563,9 +2940,9 @@ SKYNET:
                 }
             },
             deleteMeeting: async (id) => {
-                if(!confirm('ยืนยันลบบันทึกการประชุมนี้?')) return;
+                if (!confirm('ยืนยันลบบันทึกการประชุมนี้?')) return;
                 const { error } = await db.from('meetings').delete().eq('id', id);
-                if(error) alert('ลบไม่ได้: ' + error.message);
+                if (error) alert('ลบไม่ได้: ' + error.message);
                 else app.loadMeetings();
             },
 
@@ -2581,7 +2958,7 @@ SKYNET:
                 if (state.attendance) {
                     hide('status-idle'); show('status-checked-in');
                     getEl('val-checkin-time').innerText = state.attendance.check_in;
-                    if(state.attendance.check_out) {
+                    if (state.attendance.check_out) {
                         getEl('val-checkout-time').innerText = state.attendance.check_out;
                         show('checked-out-msg');
                         hide('btn-checkout');
@@ -2594,56 +2971,36 @@ SKYNET:
                 }
             },
             getLocation: () => {
-                const btn = getEl('btn-gps');
-                btn.innerHTML = 'กำลังค้นหา...';
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        const { latitude, longitude } = pos.coords;
-                        state.location = { lat: latitude, lng: longitude };
-                        // Distance Calc
-                        const R=6371e3, φ1=latitude*Math.PI/180, φ2=OFFICE_LOCATION.lat*Math.PI/180, Δφ=(OFFICE_LOCATION.lat-latitude)*Math.PI/180, Δλ=(OFFICE_LOCATION.lng-longitude)*Math.PI/180;
-                        const a=Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2, c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-                        const dist = Math.round(R*c);
-                        
-                        getEl('gps-dist').innerText = dist;
-                        getEl('debug-loc').innerText = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                        show('gps-status');
-                        
-                        if(dist <= MAX_DIST) {
-                            getEl('btn-checkin').disabled = false;
-                            getEl('btn-checkin').classList.remove('bg-indigo-600');
-                            getEl('btn-checkin').classList.add('bg-emerald-500', 'hover:bg-emerald-600');
-                            getEl('btn-checkin').innerText = 'ยืนยันลงเวลา';
-                        } else {
-                            alert(`คุณอยู่นอกพื้นที่ (${dist} ม.)`);
-                        }
-                        btn.innerHTML = '<i data-lucide="map-pin"></i> อัปเดตตำแหน่ง';
-                        lucide.createIcons();
-                    },
-                    () => { alert('ไม่สามารถระบุตำแหน่ง'); btn.innerHTML = 'ลองใหม่'; }
-                );
+                // Honor System: No GPS required
+                console.log("GPS bypassed for Honor System");
             },
             handleCheckIn: async () => {
+                if (!confirm("คุณกำลังเช็คอิน และลงเวลาเข้าสู่ระบบ\nยืนยันเพื่อลงเวลา")) return;
+
                 const todayStr = new Date().toISOString().split('T')[0];
                 const timeStr = new Date().toLocaleTimeString('th-TH');
-                await db.from('attendance').insert({ user_id: state.user.id, user_name: state.profile.name, date: todayStr, check_in: timeStr, status: 'Present', location: state.location });
+
+                // Honor System Location
+                const honorLocation = { lat: 0, lng: 0, note: 'Honor System' };
+
+                await db.from('attendance').insert({ user_id: state.user.id, user_name: state.profile.name, date: todayStr, check_in: timeStr, status: 'Present', location: honorLocation });
                 app.loadCheckin();
             },
             handleCheckOut: async () => {
                 const now = new Date();
                 const leaveStart = new Date();
                 leaveStart.setHours(17, 30, 0, 0); // 17:30
-                
+
                 let confirmMsg = 'ยืนยันลงเวลาออกงาน?';
-                if(now < leaveStart) {
-                     confirmMsg = '⚠️ ยังไม่ถึงเวลาเลิกงาน (17:30 น.)\nยืนยันจะลงเวลาออกก่อนกำหนดหรือไม่?';
+                if (now < leaveStart) {
+                    confirmMsg = '⚠️ ยังไม่ถึงเวลาเลิกงาน (17:30 น.)\nยืนยันจะลงเวลาออกก่อนกำหนดหรือไม่?';
                 }
-                
-                if(!confirm(confirmMsg)) return;
-                
+
+                if (!confirm(confirmMsg)) return;
+
                 // FIX V2: Re-fetch ID if missing to prevent "undefined reading id" error
                 let record = state.attendance || state.todayAttendance;
-                
+
                 if (!record || !record.id) {
                     // Try fetching current attendance from DB
                     const todayStr = new Date().toISOString().split('T')[0];
@@ -2652,7 +3009,7 @@ SKYNET:
                         .eq('user_id', state.user.id)
                         .eq('date', todayStr)
                         .single();
-                        
+
                     if (data) record = data;
                 }
 
@@ -2663,21 +3020,21 @@ SKYNET:
 
                 const timeStr = now.toLocaleTimeString('th-TH');
                 const { error: updateError } = await db.from('attendance').update({ check_out: timeStr }).eq('id', record.id);
-                
-                if(updateError) {
+
+                if (updateError) {
                     alert('เกิดข้อผิดพลาด: ' + updateError.message);
                     return;
                 }
 
                 alert('✅ ลงเวลาออกงานเรียบร้อย');
-                
+
                 // อัปเดตข้อมูลในตัวแปรทันที ไม่ต้องรอโหลดใหม่
                 if (state.attendance) state.attendance.check_out = timeStr;
                 if (state.todayAttendance) state.todayAttendance.check_out = timeStr;
 
                 app.loadCheckin();
             },
-            
+
             // DOWNLOAD CSV
             downloadCSV: () => {
                 const data = state.allAttendance;
@@ -2688,7 +3045,7 @@ SKYNET:
 
                 // Define headers
                 const headers = ["Date", "Employee Name", "Check In", "Check Out", "Status"];
-                
+
                 // Map data to rows
                 const rows = data.map(row => [
                     row.date,
@@ -2707,7 +3064,7 @@ SKYNET:
                 // Add BOM for Excel UTF-8 compatibility
                 const bom = "\uFEFF";
                 const blob = new Blob([bom + csvContent], { type: "text/csv;charset=utf-8;" });
-                
+
                 // Create download link
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
@@ -2718,18 +3075,18 @@ SKYNET:
                 link.click();
                 document.body.removeChild(link);
             },
-            
+
             // REPORTS
             loadReport: async () => {
                 const summaryGrid = getEl('report-summary-grid');
                 const dailyContainer = getEl('report-daily-container');
-                
+
                 // Show Loading
                 summaryGrid.innerHTML = '<div class="col-span-full text-center py-8"><div class="loader loader-dark"></div></div>';
                 dailyContainer.innerHTML = '';
 
                 // Fetch Data: Attendance, Leaves, Profiles
-                const [ { data: attendance }, { data: leaves }, { data: profiles } ] = await Promise.all([
+                const [{ data: attendance }, { data: leaves }, { data: profiles }] = await Promise.all([
                     db.from('attendance').select('*').order('date', { ascending: false }),
                     db.from('leaves').select('*').eq('status', 'Approved'),
                     db.from('profiles').select('*')
@@ -2741,13 +3098,13 @@ SKYNET:
 
                 // 1. GENERATE SUMMARY (PER PERSON)
                 const summaryData = {};
-                
+
                 // Init structure
                 allProfiles.forEach(p => {
-                    summaryData[p.name] = { 
-                        name: p.name, 
-                        role: p.position || p.role, 
-                        late: 0, 
+                    summaryData[p.name] = {
+                        name: p.name,
+                        role: p.position || p.role,
+                        late: 0,
                         leaves: 0,
                         avatar: p.name.charAt(0).toUpperCase()
                     };
@@ -2814,7 +3171,7 @@ SKYNET:
                     const rows = grouped[dateKey].map(r => {
                         let statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold border border-emerald-100">ตรงเวลา</span>`;
                         if (r.status === 'Late') statusBadge = `<span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-100">มาสาย</span>`;
-                        
+
                         return `
                         <tr class="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0">
                             <td class="p-4 font-medium text-slate-700">${r.user_name}</td>
@@ -2849,7 +3206,7 @@ SKYNET:
                     </div>
                     `;
                 }).join('');
-                
+
                 lucide.createIcons();
             },
         };
@@ -2864,11 +3221,11 @@ SKYNET:
             btn.disabled = true;
             getEl('auth-loader').classList.remove('hidden');
             try {
-                if(getEl('auth-title').innerText.includes('ยินดี')) await auth.login(email, pass);
+                if (getEl('auth-title').innerText.includes('ยินดี')) await auth.login(email, pass);
                 else await auth.register(email, pass, e.target.name.value);
-            } catch(err) { 
-                getEl('auth-error-msg').innerText = err.message; 
-                show('auth-error'); 
+            } catch (err) {
+                getEl('auth-error-msg').innerText = err.message;
+                show('auth-error');
                 btn.disabled = false;
                 getEl('auth-loader').classList.add('hidden');
             }
@@ -2886,7 +3243,7 @@ SKYNET:
         bind('leave-form', 'submit', (e) => { e.preventDefault(); app.submitLeave(); });
         bind('add-meeting-form', 'submit', (e) => { e.preventDefault(); app.saveMeeting(); });
         bind('add-event-form', 'submit', (e) => { e.preventDefault(); app.saveEvent(); });
-        bind('chat-form', 'submit', (e) => { 
+        bind('chat-form', 'submit', (e) => {
             e.preventDefault();
             const input = getEl('chat-input');
             if (input.value.trim()) {
@@ -2897,7 +3254,7 @@ SKYNET:
 
         // Add listener for late excuse form if not handled
         bind('form-late-excuse', 'submit', (e) => {
-            e.preventDefault(); 
+            e.preventDefault();
             // The button uses onclick="app.submitLateExcuse()", 
             // but pressing Enter on inputs triggers submit event.
             // We can call the same function or just prevent default.
@@ -2916,5 +3273,5 @@ SKYNET:
         auth.init();
     </script>
 </body>
-</html>
 
+</html>
