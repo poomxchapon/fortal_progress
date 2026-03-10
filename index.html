@@ -508,7 +508,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.9</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v3.0</span></p>
                     </div>
                 </div>
             </div>
@@ -2634,7 +2634,7 @@ SKYNET:
                 `;
 
                 // 3. Render List (Only My Leaves)
-                const myLeavesHistory = state.leaves.filter(l => l.user_id === state.user.id);
+                const myLeavesHistory = state.leaves.filter(l => l.user_id === state.user.id && l.status !== 'Rejected');
                 const list = getEl('leave-list');
 
                 if (myLeavesHistory.length === 0) {
