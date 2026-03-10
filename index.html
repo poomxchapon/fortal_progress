@@ -406,7 +406,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.3</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.4</span></p>
                     </div>
                 </div>
             </div>
@@ -1333,7 +1333,7 @@
         const OFFICE_LOCATION = { lat: 18.7225, lng: 99.0255 };
         const MAX_DIST = 1500; // ปรับลดระยะเหลือ 50 เมตร
         const ADMIN_EMAIL = 'poomie@live.com'; // Hardcoded Admin
-        const GEMINI_API_KEY = 'AIzaSyCkctwS68GPvWMKX1qLllNEY1Bdr9sUAJ4';
+        // Gemini API key moved to server-side (Vercel env var)
 
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2010,22 +2010,19 @@ USER: ${message}
 SKYNET:
                     `;
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                    const response = await fetch('/api/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ parts: [{ text: prompt }] }]
-                        })
+                        body: JSON.stringify({ prompt })
                     });
 
                     const data = await response.json();
 
-                    // Check if there's an error in the response
                     if (data.error) {
-                        throw new Error(data.error.message);
+                        throw new Error(data.error);
                     }
 
-                    const aiText = data.candidates[0].content.parts[0].text;
+                    const aiText = data.text;
 
                     app.hideTyping();
 
