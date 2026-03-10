@@ -406,7 +406,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.5</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.6</span></p>
                     </div>
                 </div>
             </div>
@@ -2255,7 +2255,17 @@ SKYNET:
             // TASKS
             loadTasks: async () => {
                 const { data } = await db.from('tasks').select('*').order('created_at', { ascending: false });
-                state.tasks = data || [];
+                const allTasks = data || [];
+                // Filter: show only tasks assigned to me (or created by me, or unassigned)
+                if (state.profile && state.profile.role !== 'admin') {
+                    state.tasks = allTasks.filter(t =>
+                        t.assignee === state.profile.name ||
+                        t.created_by === state.user.id ||
+                        !t.assignee
+                    );
+                } else {
+                    state.tasks = allTasks; // Admin sees all
+                }
                 app.renderTasks();
             },
             renderTasks: () => {
