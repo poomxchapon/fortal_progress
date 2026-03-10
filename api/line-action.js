@@ -20,7 +20,8 @@ export default async function handler(req, res) {
   const { data: leave, error: fetchErr } = await db.from('leaves').select('*').eq('id', leave_id).single();
 
   if (fetchErr || !leave) {
-    return res.status(404).send(page('❌ ไม่พบใบลา', 'ใบลานี้อาจถูกลบไปแล้ว'));
+    const debugInfo = fetchErr ? `Error: ${fetchErr.message} | Code: ${fetchErr.code}` : `No data for id=${leave_id}`;
+    return res.status(404).send(page('❌ ไม่พบใบลา', `${debugInfo}<br><br><small>URL: ${SUPABASE_URL ? '✅' : '❌'} | Key: ${SUPABASE_SERVICE_KEY ? '✅' : '❌'}</small>`));
   }
 
   if (leave.status !== 'Pending') {
