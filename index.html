@@ -445,10 +445,15 @@
                 </button>
             </form>
 
-            <div class="mt-8 text-center">
+            <div class="mt-8 text-center space-y-3">
                 <button id="toggle-auth"
                     class="text-sm text-slate-500 hover:text-indigo-600 font-medium transition-colors">
                     ยังไม่มีบัญชี? <span class="underline decoration-indigo-200 underline-offset-4">ลงทะเบียนใหม่</span>
+                </button>
+                <br>
+                <button id="btn-forgot-password"
+                    class="text-sm text-slate-400 hover:text-indigo-600 font-medium transition-colors">
+                    ลืมรหัสผ่าน?
                 </button>
             </div>
         </div>
@@ -470,7 +475,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.0</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.1</span></p>
                     </div>
                 </div>
             </div>
@@ -3187,6 +3192,24 @@ SKYNET:
             getEl('auth-title').innerText = isLogin ? 'สร้างบัญชีใหม่' : 'ยินดีต้อนรับ';
             getEl('btn-auth-text').innerText = isLogin ? 'ลงทะเบียน' : 'เข้าสู่ระบบ';
             getEl('name-field').classList.toggle('hidden');
+        });
+
+        bind('btn-forgot-password', 'click', async () => {
+            const email = getEl('input-email').value.trim();
+            if (!email) {
+                alert('กรุณากรอกอีเมลก่อน แล้วกด "ลืมรหัสผ่าน"');
+                getEl('input-email').focus();
+                return;
+            }
+            try {
+                const { error } = await db.auth.resetPasswordForEmail(email, {
+                    redirectTo: 'https://fortal-progress.vercel.app/'
+                });
+                if (error) throw error;
+                alert(`📧 ส่งลิงก์รีเซ็ตรหัสผ่านไปที่ ${email} แล้ว\nกรุณาเช็คอีเมล (รวมถึงโฟลเดอร์ Spam)`);
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
         });
 
         bind('add-project-form', 'submit', (e) => { e.preventDefault(); app.saveProject(); });
