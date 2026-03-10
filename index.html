@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WorkSpace - Work City Tycoon</title>
+    <title>WorkSpace</title>
 
     <!-- Google Fonts: Prompt Only (Unified for Thai support) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -153,44 +153,7 @@
             gap: 4px;
         }
 
-        /* --- GAME WIDGET STYLES --- */
-        .city-sky-morning {
-            background: linear-gradient(to bottom, #60a5fa, #bfdbfe);
-        }
-
-        .city-sky-afternoon {
-            background: linear-gradient(to bottom, #3b82f6, #93c5fd);
-        }
-
-        .city-sky-evening {
-            background: linear-gradient(to bottom, #f59e0b, #fcd34d, #818cf8);
-        }
-
-        .city-sky-night {
-            background: linear-gradient(to bottom, #1e1b4b, #312e81, #4338ca);
-            color: white;
-        }
-
-        .building-pop {
-            animation: popUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            opacity: 0;
-            transform: scale(0);
-            transform-origin: bottom;
-        }
-
-        @keyframes popUp {
-            from {
-                opacity: 0;
-                transform: scale(0);
-            }
-
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        /* Hide scrollbar for city container but allow scroll */
+        /* Hide scrollbar */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -443,7 +406,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive</p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.1</span></p>
                     </div>
                 </div>
             </div>
@@ -675,59 +638,6 @@
                             </div>
                         </div>
 
-                        <!-- Work City Widget (Full Width) -->
-                        <div
-                            class="col-span-1 md:col-span-2 lg:col-span-4 bento-card bg-slate-900 rounded-3xl shadow-lg border border-slate-200 h-80 relative overflow-hidden group">
-                            <!-- Game Canvas Background -->
-                            <div id="city-sky"
-                                class="absolute inset-0 z-0 city-sky-morning transition-colors duration-1000"></div>
-
-                            <!-- Decor -->
-                            <div class="absolute top-6 left-8 text-white/30 animate-pulse"><i data-lucide="cloud"
-                                    width="48"></i></div>
-                            <div class="absolute top-12 right-16 text-white/20"><i data-lucide="cloud" width="32"></i>
-                            </div>
-
-                            <!-- Floating HUD -->
-                            <div
-                                class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-sm border border-white/50 flex gap-4 items-center">
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded border border-yellow-500 shadow-sm">LV.
-                                        <span id="game-level">1</span></span>
-                                    <span class="text-sm font-bold text-slate-700">Work City</span>
-                                </div>
-                                <div class="h-4 w-px bg-slate-300"></div>
-                                <div class="flex flex-col w-32">
-                                    <div class="flex justify-between text-[10px] text-slate-500 font-medium mb-0.5">
-                                        <span>XP</span>
-                                        <span><span id="xp-val">0</span> to up</span>
-                                    </div>
-                                    <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                        <div id="xp-bar"
-                                            class="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                                            style="width: 0%"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- City Container -->
-                            <div class="flex-1 relative z-10 flex items-end justify-center h-full w-full">
-                                <!-- Ground -->
-                                <div class="absolute bottom-0 w-full h-8 bg-[#4ade80] z-10 border-t-4 border-[#22c55e]">
-                                </div>
-                                <div
-                                    class="absolute bottom-0 w-full h-1/4 bg-gradient-to-t from-emerald-900/50 to-transparent z-0">
-                                </div>
-
-                                <!-- Buildings Area -->
-                                <div id="city-container"
-                                    class="relative z-10 flex items-end gap-3 px-10 pb-8 h-full w-full overflow-x-auto no-scrollbar"
-                                    style="mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);">
-                                    <!-- JS generates buildings here -->
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -1565,8 +1475,10 @@
             init: () => {
                 hide('auth-view');
                 show('app-view');
-                // Set background based on time for game dashboard
-                app.updateSky();
+                // Restore theme
+                if (localStorage.getItem('theme') === 'cyberpunk') {
+                    document.body.classList.add('cyberpunk');
+                }
                 router.navigate('dashboard');
             },
             showAuth: () => {
@@ -1614,24 +1526,6 @@
                 // Save preference
                 const isDark = document.body.classList.contains('cyberpunk');
                 localStorage.setItem('theme', isDark ? 'cyberpunk' : 'light');
-            },
-
-            // DASHBOARD GAME LOGIC
-            updateSky: () => {
-                // Check saved theme first
-                if (localStorage.getItem('theme') === 'cyberpunk') {
-                    document.body.classList.add('cyberpunk');
-                }
-
-                const hour = new Date().getHours();
-                const sky = getEl('city-sky');
-                if (!sky) return;
-
-                sky.className = 'absolute inset-0 z-0 transition-colors duration-1000';
-                if (hour >= 5 && hour < 12) sky.classList.add('city-sky-morning');
-                else if (hour >= 12 && hour < 17) sky.classList.add('city-sky-afternoon');
-                else if (hour >= 17 && hour < 20) sky.classList.add('city-sky-evening');
-                else sky.classList.add('city-sky-night');
             },
 
             loadDashboard: async () => {
@@ -1721,23 +1615,6 @@
                     }
                 }
 
-                // Game Stats (Calculated)
-                const level = Math.floor(doneCount / 5) + 1;
-                const xp = doneCount % 5;
-                const nextLevelXp = 5;
-                const xpPercent = (xp / nextLevelXp) * 100;
-
-                const elLevel = getEl('game-level');
-                if (elLevel) elLevel.innerText = level;
-
-                const elXpVal = getEl('xp-val');
-                if (elXpVal) elXpVal.innerText = `${nextLevelXp - xp}`;
-
-                const elXpBar = getEl('xp-bar');
-                if (elXpBar) elXpBar.style.width = `${xpPercent}%`;
-
-                // Render City
-                app.renderCity(doneCount, progressCount, todoCount);
                 lucide.createIcons();
             },
 
@@ -1778,75 +1655,6 @@
                 } else {
                     // Check In Logic (Honor System)
                     app.handleCheckIn().then(() => app.loadDashboard());
-                }
-            },
-
-            renderCity: (done, progress, todo) => {
-                const container = getEl('city-container');
-                container.innerHTML = '';
-
-                // Helper to create building element
-                const createBuilding = (type, delay) => {
-                    const div = document.createElement('div');
-                    div.className = 'relative flex flex-col items-center justify-end building-pop shrink-0';
-                    div.style.animationDelay = `${delay}ms`;
-
-                    let content = '';
-                    if (type === 'done') {
-                        // Random skyscraper or house
-                        const size = Math.random() > 0.7 ? 'h-32 w-16' : 'h-16 w-12';
-                        const color = Math.random() > 0.5 ? 'bg-indigo-500' : 'bg-blue-500';
-                        const windows = Math.random() > 0.5 ? 'bg-yellow-200' : 'bg-blue-200';
-
-                        // Simple CSS Building
-                        content = `
-                            <div class="${size} ${color} rounded-t-lg shadow-lg relative border-2 border-white/20 transition-all hover:scale-105 hover:z-10 cursor-pointer">
-                                <div class="absolute inset-2 grid grid-cols-2 gap-1 content-start">
-                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
-                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
-                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
-                                    <div class="h-2 w-full ${windows} rounded-sm opacity-80"></div>
-                                </div>
-                            </div>
-                            <div class="h-1 w-full bg-black/20 rounded-full mt-1 blur-[1px]"></div>
-                        `;
-                    } else if (type === 'progress') {
-                        // Crane
-                        content = `
-                            <div class="h-24 w-8 relative mx-auto">
-                                <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-full bg-yellow-500"></div>
-                                <div class="absolute top-0 right-0 w-16 h-1 bg-yellow-500"></div>
-                                <div class="absolute top-0 right-0 w-0.5 h-8 bg-black/50 origin-top animate-bounce"></div>
-                            </div>
-                            <div class="h-1 w-8 bg-black/20 rounded-full"></div>
-                        `;
-                    } else {
-                        // Empty lot / Blueprint
-                        content = `
-                            <div class="h-12 w-12 bg-white/10 border-2 border-dashed border-white/40 rounded-lg flex items-center justify-center">
-                                <span class="text-xs opacity-50">🚧</span>
-                            </div>
-                        `;
-                    }
-
-                    div.innerHTML = content;
-                    return div;
-                };
-
-                // Add elements
-                let delay = 0;
-                for (let i = 0; i < done; i++) {
-                    container.appendChild(createBuilding('done', delay));
-                    delay += 50;
-                }
-                for (let i = 0; i < progress; i++) {
-                    container.appendChild(createBuilding('progress', delay));
-                    delay += 50;
-                }
-                // Limit todo items visually so it doesn't clutter too much
-                for (let i = 0; i < Math.min(todo, 5); i++) {
-                    container.appendChild(createBuilding('todo', delay));
-                    delay += 50;
                 }
             },
 
