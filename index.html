@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WorkSpace</title>
+    <link rel="icon" type="image/png" href="public/logo.png">
 
     <!-- Google Fonts: Prompt Only (Unified for Thai support) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -428,8 +429,8 @@
             class="w-full max-w-sm bg-white sm:rounded-3xl sm:shadow-xl sm:border border-slate-100 p-8 sm:p-10 page-transition">
             <div class="text-center mb-8">
                 <div
-                    class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white mb-4 shadow-lg shadow-indigo-200">
-                    <i data-lucide="briefcase" width="32" height="32"></i>
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white mb-4 shadow-lg shadow-indigo-200 overflow-hidden">
+                    <img src="public/logo.png" alt="WorkSpace" class="w-12 h-12 object-contain">
                 </div>
                 <h2 id="auth-title" class="text-2xl font-bold text-slate-900">ยินดีต้อนรับ</h2>
                 <div class="mt-2">
@@ -502,12 +503,12 @@
             class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col shadow-2xl lg:shadow-none">
             <div class="p-8 pb-4">
                 <div class="flex items-center gap-4">
-                    <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-200">
-                        <i data-lucide="briefcase"></i>
+                    <div class="bg-white p-1.5 rounded-xl shadow-md shadow-indigo-200 overflow-hidden">
+                        <img src="public/logo.png" alt="WorkSpace" class="w-8 h-8 object-contain">
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.2</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.4</span></p>
                     </div>
                 </div>
             </div>
@@ -2800,7 +2801,6 @@ SKYNET:
 
                     // Find events
                     const dayLeaves = state.leaves.filter(l => l.date === dateStr && l.status === 'Approved');
-                    const dayDeadlines = state.tasks.filter(t => t.deadline === dateStr);
                     const dayEvents = state.calendarEvents.filter(e => e.date === dateStr);
 
                     let dots = '';
@@ -2817,9 +2817,6 @@ SKYNET:
 
                     // Leaves
                     dayLeaves.forEach(l => dots += `<div class="text-[10px] bg-red-100 text-red-600 px-1 rounded mt-1 truncate">${l.user_name.split(' ')[0]} ลา</div>`);
-
-                    // Deadlines
-                    dayDeadlines.forEach(t => dots += `<div class="text-[10px] bg-indigo-100 text-indigo-600 px-1 rounded mt-1 truncate">ส่ง: ${t.title}</div>`);
 
                     // Date Cell Style (Red if holiday)
                     const cellBg = holiday ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-100';
@@ -3245,7 +3242,11 @@ SKYNET:
                 if (error) throw error;
                 alert(`📧 ส่งลิงก์รีเซ็ตรหัสผ่านไปที่ ${email} แล้ว\nกรุณาเช็คอีเมล (รวมถึงโฟลเดอร์ Spam)`);
             } catch (err) {
-                alert('เกิดข้อผิดพลาด: ' + err.message);
+                if (err.message && err.message.includes('security purposes')) {
+                    alert('⏳ กรุณารอ 25 วินาทีก่อนกดอีกครั้ง');
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + err.message);
+                }
             }
         });
 
