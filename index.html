@@ -470,7 +470,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.7</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.8</span></p>
                     </div>
                 </div>
             </div>
@@ -2189,9 +2189,16 @@ SKYNET:
 
                         if (error) throw error;
 
+                        // Notify admin via LINE
+                        fetch('/api/notify-leave', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user_name: state.profile.name, type, date, reason })
+                        }).catch(() => {});
+
                         setTimeout(() => {
                             app.addChatMessage(`✅ เรียบร้อย! บันทึกใบลาให้แล้วครับ พักผ่อนให้เต็มที่นะ!`);
-                            app.loadLeaves(); // Refresh UI
+                            app.loadLeaves();
                         }, 1000);
 
                     } catch (err) {
@@ -2691,8 +2698,13 @@ SKYNET:
                 if (error) alert(error.message);
                 else {
                     alert(`ส่งใบลาเรียบร้อย (${requestingDays} วัน) รอหัวหน้าอนุมัติครับ`);
+                    // Notify admin via LINE
+                    fetch('/api/notify-leave', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ user_name: state.profile.name, type, date: startDate, reason })
+                    }).catch(() => {});
                     getEl('leave-form').reset();
-                    // Set default dates again
                     getEl('leave-start-time').value = "09:30";
                     getEl('leave-end-time').value = "18:30";
                     app.loadLeaves();
