@@ -470,7 +470,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v1.9</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.0</span></p>
                     </div>
                 </div>
             </div>
@@ -625,8 +625,9 @@
                                     </div>
                                 </div>
                                 <button id="btn-dash-checkin" onclick="app.quickCheckAction()"
-                                    class="bg-white text-indigo-600 p-3 rounded-full shadow-lg hover:scale-110 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <i data-lucide="map-pin" width="24"></i>
+                                    class="bg-white text-indigo-600 px-5 py-2.5 rounded-xl shadow-lg hover:scale-105 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed font-bold text-sm flex items-center gap-2">
+                                    <i data-lucide="map-pin" width="16"></i>
+                                    <span id="btn-dash-checkin-text">ลงเวลางาน</span>
                                 </button>
                             </div>
                             <!-- Decor -->
@@ -1742,24 +1743,24 @@
                     if (state.todayAttendance.check_out) {
                         statusEl.innerText = "ออกงานแล้ว";
                         timeEl.innerText = `ออกเวลา: ${state.todayAttendance.check_out}`;
-                        btn.innerHTML = '<i data-lucide="check" width="24"></i>';
+                        btn.innerHTML = '<i data-lucide="check" width="16"></i><span>เสร็จสิ้น</span>';
                         btn.disabled = true;
                         btn.classList.add('bg-slate-100', 'text-slate-400');
-                        btn.classList.remove('bg-white', 'text-indigo-600', 'hover:scale-110');
+                        btn.classList.remove('bg-white', 'text-indigo-600', 'hover:scale-105');
                     } else {
                         statusEl.innerText = "เข้างานแล้ว";
                         timeEl.innerText = `เข้าเวลา: ${state.todayAttendance.check_in}`;
-                        btn.innerHTML = '<i data-lucide="log-out" width="24"></i>';
-                        btn.onclick = () => app.quickCheckAction('checkout'); // Pass checkout mode
+                        btn.innerHTML = '<i data-lucide="log-out" width="16"></i><span>ลงเวลาออก</span>';
+                        btn.onclick = () => app.quickCheckAction('checkout');
                     }
                 } else {
                     statusEl.innerText = "ยังไม่เข้างาน";
                     timeEl.innerText = "คลิกเพื่อลงเวลา";
-                    btn.innerHTML = '<i data-lucide="map-pin" width="24"></i>';
+                    btn.innerHTML = '<i data-lucide="map-pin" width="16"></i><span>ลงเวลางาน</span>';
                     btn.onclick = () => app.quickCheckAction('checkin');
                     btn.disabled = false;
                     btn.classList.remove('bg-slate-100', 'text-slate-400');
-                    btn.classList.add('bg-white', 'text-indigo-600', 'hover:scale-110');
+                    btn.classList.add('bg-white', 'text-indigo-600', 'hover:scale-105');
                 }
                 lucide.createIcons();
             },
