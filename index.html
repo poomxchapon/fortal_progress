@@ -390,6 +390,38 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div
 
+    <!-- ================= RESET PASSWORD VIEW ================= -->
+    <div id="reset-view" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-white sm:bg-slate-50">
+        <div class="w-full max-w-sm bg-white sm:rounded-3xl sm:shadow-xl sm:border border-slate-100 p-8 sm:p-10 page-transition">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 text-white mb-4 shadow-lg shadow-emerald-200">
+                    <i data-lucide="key-round" width="32" height="32"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-900">ตั้งรหัสผ่านใหม่</h2>
+                <p class="text-slate-500 text-sm mt-2">กรอกรหัสผ่านใหม่ที่ต้องการ</p>
+            </div>
+            <form id="reset-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">รหัสผ่านใหม่</label>
+                    <input type="password" id="reset-password" required minlength="6"
+                        class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                        placeholder="อย่างน้อย 6 ตัวอักษร">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5 ml-1">ยืนยันรหัสผ่าน</label>
+                    <input type="password" id="reset-password-confirm" required minlength="6"
+                        class="w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                        placeholder="กรอกอีกครั้ง">
+                </div>
+                <button type="submit" id="btn-reset"
+                    class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-semibold hover:bg-emerald-700 active:scale-[0.98] transition-all shadow-lg shadow-emerald-200 flex justify-center items-center gap-3">
+                    <span id="btn-reset-text">เปลี่ยนรหัสผ่าน</span>
+                    <div id="reset-loader" class="loader hidden"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- ================= AUTH VIEW ================= -->
     <div id="auth-view" class="hidden flex-1 flex flex-col items-center justify-center p-6 bg-white sm:bg-slate-50">
         <div
@@ -475,7 +507,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.1</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.2</span></p>
                     </div>
                 </div>
             </div>
@@ -1524,7 +1556,12 @@
                     router.showAuth();
                 }
                 db.auth.onAuthStateChange(async (event, session) => {
-                    if (event === 'SIGNED_IN' && session) {
+                    if (event === 'PASSWORD_RECOVERY') {
+                        // Show reset password form
+                        hide('auth-view');
+                        hide('app-view');
+                        show('reset-view');
+                    } else if (event === 'SIGNED_IN' && session) {
                         state.user = session.user;
                         await auth.loadProfile();
                         startRealtimeListeners();
@@ -3209,6 +3246,28 @@ SKYNET:
                 alert(`📧 ส่งลิงก์รีเซ็ตรหัสผ่านไปที่ ${email} แล้ว\nกรุณาเช็คอีเมล (รวมถึงโฟลเดอร์ Spam)`);
             } catch (err) {
                 alert('เกิดข้อผิดพลาด: ' + err.message);
+            }
+        });
+
+        bind('reset-form', 'submit', async (e) => {
+            e.preventDefault();
+            const pw = getEl('reset-password').value;
+            const pw2 = getEl('reset-password-confirm').value;
+            if (pw !== pw2) { alert('รหัสผ่านไม่ตรงกัน กรุณากรอกใหม่'); return; }
+            if (pw.length < 6) { alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'); return; }
+            const btn = getEl('btn-reset');
+            btn.disabled = true;
+            getEl('reset-loader').classList.remove('hidden');
+            try {
+                const { error } = await db.auth.updateUser({ password: pw });
+                if (error) throw error;
+                alert('✅ เปลี่ยนรหัสผ่านสำเร็จ! กำลังเข้าสู่ระบบ...');
+                hide('reset-view');
+                location.reload();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด: ' + err.message);
+                btn.disabled = false;
+                getEl('reset-loader').classList.add('hidden');
             }
         });
 
