@@ -508,7 +508,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 tracking-tight">WorkSpace</h1>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.7</span></p>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">by Fortal Interactive <span class="text-slate-300">v2.8</span></p>
                     </div>
                 </div>
             </div>
@@ -2222,14 +2222,14 @@ SKYNET:
                     app.addChatMessage(`โอเคครับ ผมกำลังทำเรื่อง **${type}** ให้สำหรับวันที่ **${formatDate(date)}** เหตุผล: ${reason || '-'} ...กำลังบันทึกข้อมูลครับ 💾`);
 
                     try {
-                        const { error } = await db.from('leaves').insert({
+                        const { data: insertedLeave, error } = await db.from('leaves').insert({
                             user_id: state.user.id,
                             user_name: state.profile.name,
                             type: type,
                             date: date,
                             reason: reason,
                             status: 'Pending'
-                        });
+                        }).select().single();
 
                         if (error) throw error;
 
@@ -2237,7 +2237,7 @@ SKYNET:
                         fetch('/api/notify-leave', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ user_name: state.profile.name, type, date, reason })
+                            body: JSON.stringify({ leave_id: insertedLeave.id, user_id: state.user.id, user_name: state.profile.name, type, date, reason })
                         }).catch(() => {});
 
                         setTimeout(() => {
@@ -2727,7 +2727,7 @@ SKYNET:
                     return alert(`สิทธิ์ "${typeName}" ของคุณไม่พอ (เหลือ ${Number(quota - usedDays).toFixed(2)} วัน, ขอลา ${requestingDays} วัน)`);
                 }
 
-                const { error } = await db.from('leaves').insert({
+                const { data: insertedLeave, error } = await db.from('leaves').insert({
                     user_id: state.user.id,
                     user_name: state.profile.name,
                     type,
@@ -2737,7 +2737,7 @@ SKYNET:
                     end_time: endTime,
                     reason,
                     status: 'Pending'
-                });
+                }).select().single();
 
                 if (error) alert(error.message);
                 else {
@@ -2746,7 +2746,7 @@ SKYNET:
                     fetch('/api/notify-leave', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ user_name: state.profile.name, type, date: startDate, reason })
+                        body: JSON.stringify({ leave_id: insertedLeave.id, user_id: state.user.id, user_name: state.profile.name, type, date: startDate, reason })
                     }).catch(() => {});
                     getEl('leave-form').reset();
                     getEl('leave-start-time').value = "09:30";
