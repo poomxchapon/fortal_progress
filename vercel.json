@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/checkout-reminder",
-      "schedule": "30 11 * * 1-5"
+      "schedule": "18 11 * * 1-5"
     },
     {
       "path": "/api/cron/auto-absent",
