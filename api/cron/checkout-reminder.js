@@ -1,5 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
 export default async function handler(req, res) {
   const LINE_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   if (!LINE_TOKEN) {
@@ -15,30 +13,6 @@ export default async function handler(req, res) {
 
   const checkoutUrl = 'https://fortal-progress.vercel.app/api/quick-checkout';
   const dateFormatted = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-  // Check how many people haven't checked out yet
-  let notCheckedOut = [];
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const todayStr = now.toISOString().split('T')[0];
-
-  if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
-    try {
-      const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-      const { data } = await db.from('attendance')
-        .select('user_name')
-        .eq('date', todayStr)
-        .is('check_out', null);
-      notCheckedOut = data || [];
-    } catch (e) {
-      console.error('Error fetching attendance:', e);
-    }
-  }
-
-  const pendingNames = notCheckedOut.map(a => a.user_name).join(', ');
-  const pendingText = notCheckedOut.length > 0
-    ? `ยังไม่ลงเวลาออก: ${pendingNames}`
-    : 'ทุกคนลงเวลาออกแล้ว';
 
   try {
     const response = await fetch('https://api.line.me/v2/bot/message/broadcast', {
@@ -90,12 +64,11 @@ export default async function handler(req, res) {
                 },
                 {
                   type: 'text',
-                  text: pendingText,
+                  text: 'กดปุ่มด้านล่างเพื่อลงเวลาออก',
                   size: 'xs',
-                  color: notCheckedOut.length > 0 ? '#F59E0B' : '#10B981',
+                  color: '#94A3B8',
                   align: 'center',
-                  margin: 'md',
-                  wrap: true
+                  margin: 'md'
                 }
               ]
             },
@@ -128,11 +101,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: data.message || 'LINE API error', details: data });
     }
 
-    return res.status(200).json({
-      success: true,
-      date: dateFormatted,
-      not_checked_out: notCheckedOut.length
-    });
+    return res.status(200).json({ success: true, date: dateFormatted });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
