@@ -113,6 +113,16 @@ SKYNET:
   `.trim();
 
   try {
+    // Show typing animation (lasts up to 60 seconds, stops when message is sent)
+    await fetch('https://api.line.me/v2/bot/chat/loading', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LINE_TOKEN}`
+      },
+      body: JSON.stringify({ chatId: userId, loadingSeconds: 30 })
+    }).catch(() => {});
+
     // Call Gemini API
     console.log('[LINE] Calling Gemini...');
     const geminiRes = await fetch(
