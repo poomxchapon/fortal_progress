@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   if (!LINE_TOKEN || !GEMINI_API_KEY) {
+    console.error('Missing credentials:', { LINE_TOKEN: !!LINE_TOKEN, GEMINI_API_KEY: !!GEMINI_API_KEY });
     return res.status(500).json({ error: 'Missing credentials' });
   }
 
@@ -22,8 +23,20 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
+  // Process only first text message event
+  const event = events.find(e => e.type === 'message' && e.message.type === 'text');
+  if (!event) {
+    return res.status(200).json({ ok: true, reason: 'no text message' });
+  }
+
+  const userMessage = event.message.text;
+  const replyToken = event.replyToken;
+  const userId = event.source.userId;
+
+  console.log(`[LINE] Message from ${userId}: ${userMessage}`);
+
   // Build system context from Supabase
-  let contextData = '';
+  let contextData = 'ไม่มีข้อมูลเพิ่มเติม';
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -47,7 +60,6 @@ export default async function handler(req, res) {
         db.from('leaves').select('user_name, type, date, reason').eq('status', 'Pending')
       ]);
 
-      // Also get single-day approved leaves
       const { data: singleDayLeaves } = await db.from('leaves')
         .select('user_name, type, date, end_date, reason, status')
         .eq('status', 'Approved')
@@ -71,104 +83,127 @@ Today's Attendance: ${(todayAttendance || []).map(a => `${a.user_name} เข้
 On Leave Today: ${uniqueLeaves.length > 0 ? uniqueLeaves.map(l => `${l.user_name} (${l.type})`).join(', ') : 'ไม่มี'}
 Pending Leave Requests: ${(pendingLeaves || []).length > 0 ? (pendingLeaves || []).map(l => `${l.user_name} ขอ${l.type} วันที่ ${l.date}`).join(', ') : 'ไม่มี'}
       `.trim();
+      console.log('[LINE] Context loaded OK');
     } catch (e) {
+      console.error('[LINE] Context error:', e.message);
       contextData = 'ไม่สามารถดึงข้อมูลระบบได้';
     }
   }
 
-  // Process each event
-  for (const event of events) {
-    if (event.type !== 'message' || event.message.type !== 'text') {
-      continue;
-    }
-
-    const userMessage = event.message.text;
-    const replyToken = event.replyToken;
-
-    // Build Skynet prompt (same personality as web version)
-    const prompt = `
+  // Build Skynet prompt
+  const prompt = `
 You are 'Skynet', a friendly and witty AI Agent for 'Fortal Interactive'.
 Your personality: Casual, concise, helpful, and fun. Like a smart colleague sitting next desk.
 Language: Thai (ภาษาไทย).
 Platform: LINE OA (messaging app)
 
 INSTRUCTIONS:
-1. **Be Concise:** Keep answers short and to the point. Perfect for LINE chat format.
-2. **General Chat:** You can chat about ANYTHING (weather, food, jokes, life), not just work.
-3. **Work Knowledge:** Use the provided [CONTEXT DATA] to answer work-related questions accurately.
-4. **No Greetings:** Do not start with "Hello" or "Sawaddee" every time. Just answer.
-5. **No Markdown:** Do not use markdown formatting (no **, no \`\`\`, no #). Use plain text and emojis instead.
-6. **LINE Friendly:** Keep messages under 2000 characters. Use line breaks for readability.
+1. Be Concise: Keep answers short and to the point. Perfect for LINE chat format.
+2. General Chat: You can chat about ANYTHING (weather, food, jokes, life), not just work.
+3. Work Knowledge: Use the provided [CONTEXT DATA] to answer work-related questions accurately.
+4. No Greetings: Do not start with "Hello" or "Sawaddee" every time. Just answer.
+5. No Markdown: Do not use markdown formatting (no **, no backticks, no #). Use plain text and emojis instead.
+6. LINE Friendly: Keep messages under 2000 characters. Use line breaks for readability.
 
 [CONTEXT DATA]
 ${contextData}
 
 USER: ${userMessage}
 SKYNET:
-    `.trim();
+  `.trim();
 
-    try {
-      // Call Gemini API
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        }
-      );
-
-      const geminiData = await geminiRes.json();
-
-      let replyText = 'ขอโทษครับ ระบบขัดข้องชั่วคราว ลองใหม่อีกทีนะครับ 🤖❌';
-
-      if (geminiData.candidates && geminiData.candidates[0]) {
-        replyText = geminiData.candidates[0].content.parts[0].text;
-        // Strip any markdown that might slip through
-        replyText = replyText.replace(/\*\*/g, '').replace(/```[\s\S]*?```/g, '').trim();
-        // LINE message limit is 5000 chars
-        if (replyText.length > 4900) {
-          replyText = replyText.substring(0, 4900) + '\n\n...ข้อความยาวเกินไป';
-        }
+  try {
+    // Call Gemini API
+    console.log('[LINE] Calling Gemini...');
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
       }
+    );
 
-      // Reply via LINE
-      await fetch('https://api.line.me/v2/bot/message/reply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${LINE_TOKEN}`
-        },
-        body: JSON.stringify({
-          replyToken,
-          messages: [{
-            type: 'text',
-            text: replyText
-          }]
-        })
-      });
+    const geminiData = await geminiRes.json();
+    console.log('[LINE] Gemini status:', geminiRes.status);
 
-    } catch (err) {
-      console.error('Error processing LINE message:', err);
-      // Try to reply with error
-      await fetch('https://api.line.me/v2/bot/message/reply', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${LINE_TOKEN}`
-        },
-        body: JSON.stringify({
-          replyToken,
-          messages: [{
-            type: 'text',
-            text: 'ขอโทษครับ เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะครับ 🤖'
-          }]
-        })
-      });
+    let replyText = 'ขอโทษครับ ระบบขัดข้องชั่วคราว ลองใหม่อีกทีนะครับ 🤖❌';
+
+    if (geminiData.error) {
+      console.error('[LINE] Gemini error:', JSON.stringify(geminiData.error));
+      replyText = `ขอโทษครับ AI ขัดข้อง: ${geminiData.error.message || 'Unknown error'} 🤖❌`;
+    } else if (geminiData.candidates && geminiData.candidates[0]) {
+      replyText = geminiData.candidates[0].content.parts[0].text;
+      // Strip markdown
+      replyText = replyText.replace(/\*\*/g, '').replace(/```[\s\S]*?```/g, '').replace(/^#+\s/gm, '').trim();
+      if (replyText.length > 4900) {
+        replyText = replyText.substring(0, 4900) + '\n\n...ข้อความยาวเกินไป';
+      }
+      console.log('[LINE] Gemini replied OK, length:', replyText.length);
+    } else {
+      console.error('[LINE] Gemini unexpected response:', JSON.stringify(geminiData).substring(0, 500));
     }
-  }
 
-  return res.status(200).json({ ok: true });
+    // Reply via LINE
+    console.log('[LINE] Sending reply via replyToken...');
+    const lineRes = await fetch('https://api.line.me/v2/bot/message/reply', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LINE_TOKEN}`
+      },
+      body: JSON.stringify({
+        replyToken,
+        messages: [{ type: 'text', text: replyText }]
+      })
+    });
+
+    const lineData = await lineRes.text();
+    console.log('[LINE] Reply status:', lineRes.status, lineData);
+
+    // If reply token expired, try push message instead
+    if (lineRes.status !== 200 && userId) {
+      console.log('[LINE] Reply failed, trying push message...');
+      const pushRes = await fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${LINE_TOKEN}`
+        },
+        body: JSON.stringify({
+          to: userId,
+          messages: [{ type: 'text', text: replyText }]
+        })
+      });
+      console.log('[LINE] Push status:', pushRes.status);
+    }
+
+    return res.status(200).json({ ok: true });
+
+  } catch (err) {
+    console.error('[LINE] Fatal error:', err.message, err.stack);
+
+    // Try push message as last resort
+    if (userId) {
+      try {
+        await fetch('https://api.line.me/v2/bot/message/push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${LINE_TOKEN}`
+          },
+          body: JSON.stringify({
+            to: userId,
+            messages: [{ type: 'text', text: 'ขอโทษครับ เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะครับ 🤖' }]
+          })
+        });
+      } catch (e) {
+        console.error('[LINE] Push fallback also failed:', e.message);
+      }
+    }
+
+    return res.status(200).json({ ok: false, error: err.message });
+  }
 }
