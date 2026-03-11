@@ -2291,22 +2291,31 @@ SKYNET:
                     </tr>
                 `).join('');
 
-                // Leaves
-                const { data: leaves } = await db.from('leaves').select('*').eq('status', 'Pending').order('date', { ascending: false });
+                // Leaves — show all statuses
+                const { data: leaves } = await db.from('leaves').select('*').order('date', { ascending: false });
                 const leaveList = getEl('admin-leave-list');
                 if (leaves.length === 0) {
-                    leaveList.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่มีรายการลาที่รออนุมัติ</td></tr>';
+                    leaveList.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-400">ไม่มีรายการลา</td></tr>';
                 } else {
+                    const statusBadge = (s) => {
+                        if (s === 'Approved') return '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Approved</span>';
+                        if (s === 'Rejected') return '<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">Rejected</span>';
+                        return '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Pending</span>';
+                    };
                     leaveList.innerHTML = leaves.map(l => `
-                        <tr>
+                        <tr class="${l.status !== 'Pending' ? 'opacity-70' : ''}">
                             <td class="p-4 font-medium">${l.user_name}</td>
                             <td class="p-4">${l.type}</td>
                             <td class="p-4">${formatDate(l.date)}</td>
                             <td class="p-4 text-xs text-slate-500 max-w-xs truncate">${l.reason}</td>
-                            <td class="p-4"><span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Pending</span></td>
+                            <td class="p-4">${statusBadge(l.status)}</td>
                             <td class="p-4 text-right flex gap-2 justify-end">
-                                <button onclick="app.updateLeave('${l.id}', 'Approved')" class="text-green-600 hover:bg-green-50 p-1 rounded"><i data-lucide="check" width="16"></i></button>
-                                <button onclick="app.updateLeave('${l.id}', 'Rejected')" class="text-red-600 hover:bg-red-50 p-1 rounded"><i data-lucide="x" width="16"></i></button>
+                                ${l.status === 'Pending' ? `
+                                    <button onclick="app.updateLeave('${l.id}', 'Approved')" class="text-green-600 hover:bg-green-50 p-1 rounded"><i data-lucide="check" width="16"></i></button>
+                                    <button onclick="app.updateLeave('${l.id}', 'Rejected')" class="text-red-600 hover:bg-red-50 p-1 rounded"><i data-lucide="x" width="16"></i></button>
+                                ` : `
+                                    <button onclick="app.deleteLeave('${l.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="ลบรายการลา"><i data-lucide="trash-2" width="16"></i></button>
+                                `}
                             </td>
                         </tr>
                     `).join('');
@@ -2354,6 +2363,11 @@ SKYNET:
             },
             updateLeave: async (id, status) => {
                 await db.from('leaves').update({ status }).eq('id', id);
+                app.loadAdmin();
+            },
+            deleteLeave: async (id) => {
+                if (!confirm('ยืนยันลบรายการลานี้?')) return;
+                await db.from('leaves').delete().eq('id', id);
                 app.loadAdmin();
             },
             updateRequest: async (id, status) => {
@@ -3095,15 +3109,19 @@ SKYNET:
                         name: p.name,
                         role: p.position || p.role,
                         late: 0,
+                        absent: 0,
                         leaves: 0,
                         avatar: p.name.charAt(0).toUpperCase()
                     };
                 });
 
-                // Count Late
+                // Count Late & Absent
                 state.allAttendance.forEach(a => {
                     if (a.status === 'Late' && summaryData[a.user_name]) {
                         summaryData[a.user_name].late++;
+                    }
+                    if (a.status === 'Absent' && summaryData[a.user_name]) {
+                        summaryData[a.user_name].absent++;
                     }
                 });
 
@@ -3126,11 +3144,16 @@ SKYNET:
                                 <p class="text-xs text-slate-500 truncate capitalize">${p.role}</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mt-1">
+                        <div class="grid grid-cols-3 gap-2 mt-1">
                             <div class="bg-red-50 p-2 rounded-xl text-center border border-red-100">
                                 <p class="text-xs text-red-400 font-bold uppercase">มาสาย</p>
                                 <p class="text-xl font-bold text-red-600">${p.late}</p>
                                 <p class="text-[10px] text-red-400">ครั้ง</p>
+                            </div>
+                            <div class="bg-gray-50 p-2 rounded-xl text-center border border-gray-200">
+                                <p class="text-xs text-gray-500 font-bold uppercase">ขาดงาน</p>
+                                <p class="text-xl font-bold text-gray-600">${p.absent}</p>
+                                <p class="text-[10px] text-gray-500">วัน</p>
                             </div>
                             <div class="bg-amber-50 p-2 rounded-xl text-center border border-amber-100">
                                 <p class="text-xs text-amber-500 font-bold uppercase">ลางาน</p>
@@ -3161,6 +3184,7 @@ SKYNET:
                     const rows = grouped[dateKey].map(r => {
                         let statusBadge = `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-semibold border border-emerald-100">ตรงเวลา</span>`;
                         if (r.status === 'Late') statusBadge = `<span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-100">มาสาย</span>`;
+                        if (r.status === 'Absent') statusBadge = `<span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold border border-gray-200">ขาดงาน</span>`;
 
                         return `
                         <tr class="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-0">
