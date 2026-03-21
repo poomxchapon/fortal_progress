@@ -570,6 +570,16 @@
                     id="nav-leave">
                     <i data-lucide="coffee" class="w-5 h-5"></i> ขอลาหยุด
                 </button>
+                <button onclick="router.navigate('wfh')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-wfh">
+                    <i data-lucide="home" class="w-5 h-5"></i> Work from Home
+                </button>
+                <button onclick="router.navigate('announcements')"
+                    class="nav-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all text-slate-600 hover:bg-slate-50 hover:text-indigo-600 group"
+                    id="nav-announcements">
+                    <i data-lucide="megaphone" class="w-5 h-5"></i> ประกาศ
+                </button>
 
                 <!-- Admin Section -->
                 <div id="menu-admin-section" class="hidden">
@@ -703,6 +713,28 @@
                                 <p class="text-4xl font-bold text-slate-900" id="dash-pending-tasks">0</p>
                             </div>
                             <p class="text-xs text-slate-400 mt-auto">งานที่ต้องเร่งจัดการ</p>
+                        </div>
+
+                        <!-- Panel: Leave Quota Summary (2x1) -->
+                        <div class="col-span-1 md:col-span-2 bento-card bg-white p-6 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="bg-purple-100 p-2 rounded-lg text-purple-500"><i data-lucide="calendar-check" width="18"></i></div>
+                                <h3 class="font-bold text-slate-800">โควตาลาคงเหลือ</h3>
+                            </div>
+                            <div id="dash-leave-quota" class="grid grid-cols-3 gap-3">
+                                <div class="text-center p-3 bg-indigo-50 rounded-2xl">
+                                    <p class="text-[10px] text-indigo-500 font-bold uppercase">พักร้อน</p>
+                                    <p class="text-2xl font-bold text-indigo-700 mt-1" id="dash-q-vacation">-</p>
+                                </div>
+                                <div class="text-center p-3 bg-orange-50 rounded-2xl">
+                                    <p class="text-[10px] text-orange-500 font-bold uppercase">ลากิจ</p>
+                                    <p class="text-2xl font-bold text-orange-700 mt-1" id="dash-q-personal">-</p>
+                                </div>
+                                <div class="text-center p-3 bg-emerald-50 rounded-2xl">
+                                    <p class="text-[10px] text-emerald-500 font-bold uppercase">ลาป่วย</p>
+                                    <p class="text-2xl font-bold text-emerald-700 mt-1" id="dash-q-sick">-</p>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Panel: Who's on Leave (2x2) -->
@@ -1171,6 +1203,38 @@
                     </div>
                 </div>
 
+                <!-- WFH Page -->
+                <div id="page-wfh"
+                    class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">🏠 Work from Home</h2>
+
+                    <!-- WFH Status Card -->
+                    <div id="wfh-status-card" class="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+                        <div id="wfh-today-status" class="text-center py-8">
+                            <div class="loader loader-dark mx-auto"></div>
+                        </div>
+                    </div>
+
+                    <!-- WFH History -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 class="font-bold text-slate-800">📋 ประวัติ WFH ของคุณ</h3>
+                        </div>
+                        <div id="wfh-history-list" class="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                            <p class="p-8 text-center text-slate-400">กำลังโหลด...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Announcements History Page -->
+                <div id="page-announcements"
+                    class="page max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
+                    <h2 class="text-2xl font-bold text-slate-800">📢 ประกาศทั้งหมด</h2>
+                    <div id="announcements-history" class="space-y-4">
+                        <div class="flex justify-center py-8"><div class="loader loader-dark"></div></div>
+                    </div>
+                </div>
+
                 <!-- Admin Console (NEW) -->
                 <div id="page-admin"
                     class="page max-w-6xl mx-auto p-4 sm:p-6 lg:p-10 space-y-6 hidden page-transition bg-slate-50">
@@ -1187,6 +1251,15 @@
                         <button onclick="app.showAdminTab('requests')"
                             class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2"
                             id="tab-btn-requests">คำชี้แจงเวลา</button>
+                        <button onclick="app.showAdminTab('wfh')"
+                            class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2"
+                            id="tab-btn-wfh">🏠 WFH</button>
+                        <button onclick="app.showAdminTab('announcements')"
+                            class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2"
+                            id="tab-btn-announcements">📢 ประกาศ</button>
+                        <button onclick="app.showAdminTab('bulk-checkin')"
+                            class="admin-tab text-slate-500 border-b-2 border-transparent hover:text-indigo-600 font-medium px-4 py-2"
+                            id="tab-btn-bulk-checkin">⏰ ลงเวลาทีม</button>
                     </div>
 
                     <!-- Employee Management -->
@@ -1249,6 +1322,129 @@
                                     <tbody id="admin-request-list" class="divide-y divide-slate-100"></tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- WFH Management -->
+                    <div id="admin-wfh" class="admin-section hidden">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-slate-50 border-b border-slate-100">
+                                        <tr>
+                                            <th class="p-4 font-semibold text-slate-600">พนักงาน</th>
+                                            <th class="p-4 font-semibold text-slate-600">วันที่</th>
+                                            <th class="p-4 font-semibold text-slate-600">หมายเหตุ</th>
+                                            <th class="p-4 font-semibold text-slate-600 text-right">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-wfh-list" class="divide-y divide-slate-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Announcements Management -->
+                    <div id="admin-announcements" class="admin-section hidden">
+                        <!-- Create Announcement Form -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4">📢 สร้างประกาศใหม่</h3>
+                            <form id="announcement-form" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">หัวข้อ</label>
+                                    <input type="text" id="ann-title" required placeholder="เช่น ประชุมทีมวันศุกร์"
+                                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">เนื้อหา</label>
+                                    <textarea id="ann-body" required rows="3" placeholder="รายละเอียดประกาศ..."
+                                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">ความสำคัญ</label>
+                                        <select id="ann-priority"
+                                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="normal">🔵 ทั่วไป</option>
+                                            <option value="urgent">🔴 ด่วน</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">เวลาประกาศ</label>
+                                        <select id="ann-publish-mode" onchange="app.toggleScheduleInput()"
+                                            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                            <option value="now">📢 ประกาศเลย</option>
+                                            <option value="schedule">⏰ ตั้งเวลา</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="ann-schedule-wrapper" class="hidden">
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">วัน-เวลาที่ต้องการประกาศ</label>
+                                    <input type="datetime-local" id="ann-scheduled-at"
+                                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="ann-send-line" checked class="w-4 h-4 text-indigo-600 rounded">
+                                        <span class="text-sm text-slate-600">ส่งแจ้งเตือนผ่าน LINE ด้วย</span>
+                                    </label>
+                                </div>
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-transform active:scale-95 flex items-center gap-2">
+                                    <i data-lucide="send" width="18"></i> สร้างประกาศ
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Announcements List -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                            <div class="p-4 border-b border-slate-100">
+                                <h3 class="font-bold text-slate-800">📋 รายการประกาศทั้งหมด</h3>
+                            </div>
+                            <div id="admin-announcement-list" class="divide-y divide-slate-100 max-h-[500px] overflow-y-auto">
+                                <p class="p-8 text-center text-slate-400">กำลังโหลด...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk Check-in -->
+                    <div id="admin-bulk-checkin" class="admin-section hidden">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-6">
+                            <h3 class="text-lg font-bold text-slate-800">⏰ ลงเวลาเข้างานทั้งทีม</h3>
+                            <p class="text-sm text-slate-500">สำหรับวันทำงานพิเศษ (เช่น วันเสาร์) — กดปุ่มเดียว ลงเวลาให้พนักงานทุกคน</p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">วันที่</label>
+                                    <input type="date" id="bulk-checkin-date"
+                                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">เวลาเข้างาน</label>
+                                    <input type="time" id="bulk-checkin-time" value="09:00"
+                                        class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                            </div>
+
+                            <!-- Employee selection -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-sm font-medium text-slate-700">เลือกพนักงาน</label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" id="bulk-select-all" checked class="w-4 h-4 text-indigo-600 rounded" onchange="app.toggleBulkSelectAll()">
+                                        <span class="text-sm text-slate-600">เลือกทั้งหมด</span>
+                                    </label>
+                                </div>
+                                <div id="bulk-employee-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto"></div>
+                            </div>
+
+                            <div id="bulk-checkin-result" class="hidden text-sm p-4 rounded-xl"></div>
+
+                            <button onclick="app.bulkCheckin()"
+                                id="btn-bulk-checkin"
+                                class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-transform active:scale-95 flex items-center gap-2 text-base">
+                                <i data-lucide="users" width="20"></i> ลงเวลาเข้างานทั้งทีม
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1428,6 +1624,52 @@
         </div>
     </div>
 
+    <!-- Announcement Popup Modal -->
+    <div id="modal-announcement" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4"
+        onclick="if(event.target===this) app.closeAnnouncementPopup()">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden animate-bounce-in">
+            <div id="ann-popup-header" class="px-6 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                    <div id="ann-popup-icon" class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-2xl">📢</div>
+                    <div class="flex-1 min-w-0">
+                        <h3 id="ann-popup-title" class="font-bold text-lg text-slate-800 truncate"></h3>
+                        <p id="ann-popup-meta" class="text-xs text-slate-400 mt-0.5"></p>
+                    </div>
+                    <button onclick="app.closeAnnouncementPopup()"
+                        class="text-slate-300 hover:text-slate-500 p-1 rounded-lg transition-colors">
+                        <i data-lucide="x" width="20"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="px-6 py-5 overflow-y-auto max-h-[50vh]">
+                <div id="ann-popup-body" class="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+                <span id="ann-popup-counter" class="text-xs text-slate-400"></span>
+                <div class="flex gap-2">
+                    <button id="ann-popup-prev" onclick="app.prevAnnouncement()"
+                        class="hidden px-4 py-2 text-sm text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">
+                        ← ก่อนหน้า
+                    </button>
+                    <button id="ann-popup-next" onclick="app.nextAnnouncement()"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-transform active:scale-95">
+                        รับทราบ ✓
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+            50% { transform: scale(1.02) translateY(-5px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    </style>
+
     <!-- SCRIPTS -->
     <script>
         // CONFIG
@@ -1521,8 +1763,32 @@
             }, duration);
         };
 
-        // REALTIME: Listen for new leave requests (Admin only)
+        // REALTIME: Listen for new leave requests (Admin only) + Announcements (all users)
         const startRealtimeListeners = () => {
+            // Announcements — all users
+            db.channel('announcement-notifications')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'announcements', filter: 'published=eq.true' }, (payload) => {
+                    const ann = payload.new;
+                    if (ann.published) {
+                        showToast('📢 ประกาศใหม่!', ann.title, ann.priority === 'urgent' ? '🚨' : '📢', 10000);
+                        // Add to queue and show popup
+                        app._annQueue = [ann];
+                        app._annIndex = 0;
+                        app.showAnnouncementPopup();
+                    }
+                })
+                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'announcements' }, (payload) => {
+                    const ann = payload.new;
+                    const old = payload.old;
+                    if (ann.published && !old.published) {
+                        showToast('📢 ประกาศใหม่!', ann.title, ann.priority === 'urgent' ? '🚨' : '📢', 10000);
+                        app._annQueue = [ann];
+                        app._annIndex = 0;
+                        app.showAnnouncementPopup();
+                    }
+                })
+                .subscribe();
+
             if (!state.profile || state.profile.role !== 'admin') return;
 
             db.channel('admin-leave-notifications')
@@ -1553,6 +1819,7 @@
                     await auth.loadProfile();
                     startRealtimeListeners();
                     router.init();
+                    setTimeout(() => app.checkNewAnnouncements(), 1500);
                 } else {
                     router.showAuth();
                 }
@@ -1567,6 +1834,7 @@
                         await auth.loadProfile();
                         startRealtimeListeners();
                         router.init();
+                        setTimeout(() => app.checkNewAnnouncements(), 1500);
                     } else if (event === 'SIGNED_OUT') {
                         location.reload();
                     }
@@ -1667,6 +1935,8 @@
                 if (pageId === 'calendar') app.loadCalendar();
                 if (pageId === 'checkin') app.loadCheckin();
                 if (pageId === 'leave') app.loadLeaves();
+                if (pageId === 'wfh') app.loadWfh();
+                if (pageId === 'announcements') app.loadAnnouncementsHistory();
                 if (pageId === 'admin') app.loadAdmin();
                 if (pageId === 'report') app.loadReport();
 
@@ -1721,22 +1991,53 @@
                 state.todayAttendance = (todayAtt && todayAtt.length > 0) ? todayAtt[0] : null;
                 app.renderDashAttendance();
 
-                // Who's on Leave Today
+                // Leave Quota on Dashboard
+                const myApproved = state.leaves.filter(l => l.user_id === state.user.id && l.status === 'Approved');
+                const usageDash = { Sick: 0, Personal: 0, Vacation: 0 };
+                myApproved.forEach(l => {
+                    const days = app.calculateDuration ? app.calculateDuration(l.date, l.end_date || l.date, l.start_time || '09:30', l.end_time || '18:30') : 1;
+                    if (usageDash[l.type] !== undefined) usageDash[l.type] += days;
+                });
+                const qVac = state.profile.leave_quota || 6;
+                const fmtQ = (n) => { const v = Number(n).toFixed(1); return v.endsWith('.0') ? parseInt(v) : v; };
+                const elQVac = getEl('dash-q-vacation');
+                const elQPer = getEl('dash-q-personal');
+                const elQSick = getEl('dash-q-sick');
+                if (elQVac) elQVac.textContent = fmtQ(Math.max(0, qVac - usageDash.Vacation)) + '/' + qVac;
+                if (elQPer) elQPer.textContent = fmtQ(Math.max(0, 6 - usageDash.Personal)) + '/6';
+                if (elQSick) elQSick.textContent = fmtQ(Math.max(0, 30 - usageDash.Sick)) + '/30';
+
+                // Who's on Leave / WFH Today
                 const todaysLeaves = state.leaves.filter(l => l.date === todayStr);
+                // Fetch today's WFH
+                const { data: todayWfhAll } = await db.from('wfh').select('*').eq('date', todayStr);
+                const todaysWfh = todayWfhAll || [];
+
                 const leaveListEl = getEl('dash-leave-list');
                 if (leaveListEl) {
-                    if (todaysLeaves.length === 0) {
+                    const items = [];
+                    todaysLeaves.forEach(l => items.push(`
+                        <div class="flex items-center gap-3 w-full bg-slate-50 p-2 rounded-xl">
+                            <div class="w-8 h-8 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-xs font-bold">${l.user_name.charAt(0)}</div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-700">${l.user_name}</p>
+                                <p class="text-[10px] text-slate-400">${l.type}</p>
+                            </div>
+                        </div>
+                    `));
+                    todaysWfh.forEach(w => items.push(`
+                        <div class="flex items-center gap-3 w-full bg-indigo-50 p-2 rounded-xl">
+                            <div class="w-8 h-8 bg-indigo-100 text-indigo-500 rounded-full flex items-center justify-center text-xs font-bold">🏠</div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-700">${w.user_name}</p>
+                                <p class="text-[10px] text-indigo-400">WFH</p>
+                            </div>
+                        </div>
+                    `));
+                    if (items.length === 0) {
                         leaveListEl.innerHTML = `<div class="text-center text-slate-400 text-sm font-light"><p>🎉 วันนี้อยู่ครบทีม!</p><p class="text-xs mt-1">พร้อมหน้าพร้อมตา</p></div>`;
                     } else {
-                        leaveListEl.innerHTML = todaysLeaves.map(l => `
-                            <div class="flex items-center gap-3 w-full bg-slate-50 p-2 rounded-xl">
-                                <div class="w-8 h-8 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-xs font-bold">${l.user_name.charAt(0)}</div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-700">${l.user_name}</p>
-                                    <p class="text-[10px] text-slate-400">${l.type}</p>
-                                </div>
-                            </div>
-                        `).join('');
+                        leaveListEl.innerHTML = items.join('');
                     }
                 }
 
@@ -2343,6 +2644,10 @@ SKYNET:
                 }
 
                 lucide.createIcons();
+
+                // Load announcements + WFH too
+                app.loadAnnouncements();
+                app.loadAdminWfh();
             },
             showAdminTab: (tabName) => {
                 document.querySelectorAll('.admin-section').forEach(el => el.classList.add('hidden'));
@@ -2354,6 +2659,8 @@ SKYNET:
                 getEl(`admin-${tabName}`).classList.remove('hidden');
                 getEl(`tab-btn-${tabName}`).classList.add('text-indigo-600', 'border-indigo-600');
                 getEl(`tab-btn-${tabName}`).classList.remove('text-slate-500', 'border-transparent');
+
+                if (tabName === 'bulk-checkin') app.loadBulkCheckin();
             },
             updateRole: async (id, role) => {
                 await db.from('profiles').update({ role }).eq('id', id);
@@ -2373,6 +2680,473 @@ SKYNET:
             updateRequest: async (id, status) => {
                 await db.from('attendance_requests').update({ status }).eq('id', id);
                 app.loadAdmin();
+            },
+
+            // ===== ADMIN WFH =====
+            loadAdminWfh: async () => {
+                const { data } = await db.from('wfh').select('*').order('date', { ascending: false }).limit(50);
+                const list = getEl('admin-wfh-list');
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">ไม่มีรายการ WFH</td></tr>';
+                    return;
+                }
+                list.innerHTML = data.map(w => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-4 font-medium">${w.user_name}</td>
+                        <td class="p-4 text-slate-500">${new Date(w.date).toLocaleDateString('th-TH', { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' })}</td>
+                        <td class="p-4 text-xs text-slate-500 max-w-xs truncate">${w.note || '-'}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="app.deleteWfh('${w.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="ลบ">
+                                <i data-lucide="trash-2" width="16"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            },
+
+            deleteWfh: async (id) => {
+                if (!confirm('ยืนยันลบรายการ WFH นี้?')) return;
+                await db.from('wfh').delete().eq('id', id);
+                app.loadAdminWfh();
+            },
+
+            // ===== BULK CHECK-IN =====
+            loadBulkCheckin: () => {
+                // Set default date to today
+                const dateInput = getEl('bulk-checkin-date');
+                if (!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+
+                const list = getEl('bulk-employee-list');
+                list.innerHTML = state.team.map(p => `
+                    <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" class="bulk-emp-cb w-4 h-4 text-indigo-600 rounded" value="${p.id}" data-name="${p.name}" checked>
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center font-bold text-sm">${p.name.charAt(0).toUpperCase()}</div>
+                        <span class="text-sm font-medium text-slate-700">${p.name}</span>
+                    </label>
+                `).join('');
+                lucide.createIcons();
+            },
+            toggleBulkSelectAll: () => {
+                const checked = getEl('bulk-select-all').checked;
+                document.querySelectorAll('.bulk-emp-cb').forEach(cb => cb.checked = checked);
+            },
+            bulkCheckin: async () => {
+                const dateStr = getEl('bulk-checkin-date').value;
+                const timeStr = getEl('bulk-checkin-time').value + ':00';
+                const resultEl = getEl('bulk-checkin-result');
+                const btn = getEl('btn-bulk-checkin');
+
+                if (!dateStr) { alert('กรุณาเลือกวันที่'); return; }
+
+                const selected = [...document.querySelectorAll('.bulk-emp-cb:checked')];
+                if (selected.length === 0) { alert('กรุณาเลือกพนักงานอย่างน้อย 1 คน'); return; }
+
+                const dateLabel = new Date(dateStr).toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                if (!confirm(`ยืนยันลงเวลาเข้างานให้ ${selected.length} คน\nวันที่: ${dateLabel}\nเวลา: ${timeStr}`)) return;
+
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loader"></div> กำลังบันทึก...';
+                resultEl.classList.add('hidden');
+
+                // Check who already checked in
+                const { data: existing } = await db.from('attendance').select('user_id').eq('date', dateStr);
+                const existingIds = new Set((existing || []).map(e => e.user_id));
+
+                let inserted = 0, skipped = 0, errors = 0;
+                const skippedNames = [];
+
+                for (const cb of selected) {
+                    const userId = cb.value;
+                    const userName = cb.getAttribute('data-name');
+
+                    if (existingIds.has(userId)) {
+                        skipped++;
+                        skippedNames.push(userName);
+                        continue;
+                    }
+
+                    const { error } = await db.from('attendance').insert({
+                        user_id: userId,
+                        user_name: userName,
+                        date: dateStr,
+                        check_in: timeStr,
+                        status: 'Present',
+                        location: { lat: 0, lng: 0, note: 'Admin Bulk Check-in' }
+                    });
+
+                    if (error) errors++;
+                    else inserted++;
+                }
+
+                // Show result
+                let msg = `<b>สรุป:</b> ลงเวลาสำเร็จ ${inserted} คน`;
+                let bgClass = 'bg-emerald-50 text-emerald-800';
+                if (skipped > 0) {
+                    msg += `<br>ข้าม ${skipped} คน (ลงเวลาแล้ว): ${skippedNames.join(', ')}`;
+                    bgClass = 'bg-amber-50 text-amber-800';
+                }
+                if (errors > 0) {
+                    msg += `<br>ผิดพลาด ${errors} คน`;
+                    bgClass = 'bg-red-50 text-red-800';
+                }
+
+                resultEl.innerHTML = msg;
+                resultEl.className = `text-sm p-4 rounded-xl ${bgClass}`;
+                resultEl.classList.remove('hidden');
+
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="users" width="20"></i> ลงเวลาเข้างานทั้งทีม';
+                lucide.createIcons();
+            },
+
+            // ===== WFH (Work from Home) =====
+            loadWfh: async () => {
+                const todayStr = new Date().toISOString().split('T')[0];
+
+                // Check today's WFH status
+                const { data: todayWfh } = await db.from('wfh').select('*')
+                    .eq('user_id', state.user.id).eq('date', todayStr);
+
+                const hasWfhToday = todayWfh && todayWfh.length > 0;
+                const statusEl = getEl('wfh-today-status');
+
+                if (hasWfhToday) {
+                    const w = todayWfh[0];
+                    statusEl.innerHTML = `
+                        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-4xl">🏠</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-green-700">คุณแจ้ง WFH วันนี้แล้ว</h3>
+                        <p class="text-sm text-slate-500 mt-2">เวลาแจ้ง: ${new Date(w.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</p>
+                        ${w.note ? `<p class="text-sm text-slate-600 mt-2 bg-slate-50 inline-block px-4 py-2 rounded-xl">📝 ${w.note}</p>` : ''}
+                    `;
+                } else {
+                    statusEl.innerHTML = `
+                        <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-4xl">🏠</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">แจ้ง Work from Home วันนี้</h3>
+                        <p class="text-sm text-slate-500 mb-4">แจ้งทีมว่าวันนี้ทำงานจากบ้าน</p>
+                        <div class="max-w-sm mx-auto space-y-3">
+                            <input type="text" id="wfh-note" placeholder="หมายเหตุ (ไม่บังคับ) เช่น ประชุมออนไลน์ทั้งวัน"
+                                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-center focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <button onclick="app.submitWfh()"
+                                class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-transform active:scale-95">
+                                🏠 แจ้ง WFH วันนี้
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Load history
+                const { data: history } = await db.from('wfh').select('*')
+                    .eq('user_id', state.user.id)
+                    .order('date', { ascending: false })
+                    .limit(30);
+
+                const listEl = getEl('wfh-history-list');
+                if (!history || history.length === 0) {
+                    listEl.innerHTML = '<p class="p-8 text-center text-slate-400">ยังไม่มีประวัติ WFH</p>';
+                } else {
+                    listEl.innerHTML = history.map(w => `
+                        <div class="p-4 flex items-center gap-3 hover:bg-slate-50 transition-colors">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-lg flex-shrink-0">🏠</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-slate-700">${new Date(w.date).toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short', year: '2-digit' })}</p>
+                                ${w.note ? `<p class="text-xs text-slate-500 truncate">${w.note}</p>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                lucide.createIcons();
+            },
+
+            submitWfh: async () => {
+                const todayStr = new Date().toISOString().split('T')[0];
+                const note = getEl('wfh-note')?.value.trim() || '';
+
+                const { error } = await db.from('wfh').insert({
+                    user_id: state.user.id,
+                    user_name: state.profile.name,
+                    date: todayStr,
+                    note
+                });
+
+                if (error) {
+                    if (error.code === '23505') return alert('คุณแจ้ง WFH วันนี้ไปแล้ว');
+                    return alert('เกิดข้อผิดพลาด: ' + error.message);
+                }
+
+                showToast('🏠 แจ้ง WFH สำเร็จ!', 'วันนี้ทำงานจากบ้าน', '✅');
+                app.loadWfh();
+
+                // Notify admin via LINE push
+                try {
+                    await fetch('/api/notify-leave', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'wfh', user_name: state.profile.name, date: todayStr, note })
+                    });
+                } catch (e) { console.error('WFH notify failed:', e); }
+            },
+
+            // ===== ANNOUNCEMENTS HISTORY =====
+            loadAnnouncementsHistory: async () => {
+                const { data } = await db.from('announcements').select('*')
+                    .eq('published', true)
+                    .order('published_at', { ascending: false });
+
+                const container = getEl('announcements-history');
+                if (!data || data.length === 0) {
+                    container.innerHTML = '<p class="text-center text-slate-400 py-8">ยังไม่มีประกาศ</p>';
+                    return;
+                }
+
+                const readIds = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+
+                container.innerHTML = data.map(a => {
+                    const isUrgent = a.priority === 'urgent';
+                    const isNew = !readIds.includes(a.id);
+                    const borderColor = isUrgent ? 'border-red-200' : 'border-slate-100';
+                    const icon = isUrgent ? '🚨' : '📢';
+                    const timeStr = new Date(a.published_at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' });
+
+                    return `
+                        <div class="bg-white rounded-2xl shadow-sm border ${borderColor} p-5 ${isNew ? 'ring-2 ring-indigo-200' : ''}">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-xl ${isUrgent ? 'bg-red-100' : 'bg-indigo-100'} flex items-center justify-center text-xl flex-shrink-0">${icon}</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h3 class="font-bold text-slate-800">${a.title}</h3>
+                                        ${isNew ? '<span class="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold">ใหม่</span>' : ''}
+                                        ${isUrgent ? '<span class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full font-bold">ด่วน</span>' : ''}
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-2 whitespace-pre-wrap leading-relaxed">${a.body}</p>
+                                    <p class="text-xs text-slate-400 mt-3">โดย ${a.created_by} · ${timeStr}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                // Mark all as read
+                const allIds = data.map(a => a.id);
+                const merged = [...new Set([...readIds, ...allIds])];
+                localStorage.setItem('read_announcements', JSON.stringify(merged));
+            },
+
+            // ===== ANNOUNCEMENTS =====
+            toggleScheduleInput: () => {
+                const mode = getEl('ann-publish-mode').value;
+                const wrapper = getEl('ann-schedule-wrapper');
+                if (mode === 'schedule') {
+                    wrapper.classList.remove('hidden');
+                } else {
+                    wrapper.classList.add('hidden');
+                }
+            },
+
+            createAnnouncement: async () => {
+                const title = getEl('ann-title').value.trim();
+                const body = getEl('ann-body').value.trim();
+                const priority = getEl('ann-priority').value;
+                const publishMode = getEl('ann-publish-mode').value;
+                const sendLine = getEl('ann-send-line').checked;
+                const scheduledAt = getEl('ann-scheduled-at')?.value;
+
+                if (!title || !body) return alert('กรุณากรอกหัวข้อและเนื้อหา');
+                if (publishMode === 'schedule' && !scheduledAt) return alert('กรุณาเลือกวัน-เวลาที่ต้องการประกาศ');
+
+                const isNow = publishMode === 'now';
+                const record = {
+                    title,
+                    body,
+                    priority,
+                    publish_now: isNow,
+                    scheduled_at: isNow ? null : new Date(scheduledAt).toISOString(),
+                    published: isNow,
+                    published_at: isNow ? new Date().toISOString() : null,
+                    send_line: sendLine,
+                    line_sent: false,
+                    created_by: state.profile.name
+                };
+
+                const { data, error } = await db.from('announcements').insert(record).select().single();
+                if (error) return alert('สร้างประกาศไม่สำเร็จ: ' + error.message);
+
+                // Reset form
+                getEl('ann-title').value = '';
+                getEl('ann-body').value = '';
+                getEl('ann-priority').value = 'normal';
+                getEl('ann-publish-mode').value = 'now';
+                getEl('ann-schedule-wrapper').classList.add('hidden');
+                getEl('ann-send-line').checked = true;
+
+                // If publish now + send LINE
+                if (isNow && sendLine) {
+                    app.sendAnnouncementToLine(data);
+                }
+
+                app.loadAnnouncements();
+                showToast('📢 สร้างประกาศสำเร็จ!', title, '✅');
+            },
+
+            sendAnnouncementToLine: async (ann) => {
+                try {
+                    const res = await fetch('/api/announce-line', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: ann.id, title: ann.title, body: ann.body, priority: ann.priority })
+                    });
+                    if (res.ok) {
+                        await db.from('announcements').update({ line_sent: true }).eq('id', ann.id);
+                    }
+                } catch (e) {
+                    console.error('LINE send failed:', e);
+                }
+            },
+
+            loadAnnouncements: async () => {
+                const { data } = await db.from('announcements').select('*').order('created_at', { ascending: false });
+                const list = getEl('admin-announcement-list');
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p class="p-8 text-center text-slate-400">ยังไม่มีประกาศ</p>';
+                    return;
+                }
+                list.innerHTML = data.map(a => {
+                    const priorityBadge = a.priority === 'urgent'
+                        ? '<span class="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">🔴 ด่วน</span>'
+                        : '<span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">🔵 ทั่วไป</span>';
+                    const statusBadge = a.published
+                        ? '<span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">✅ ประกาศแล้ว</span>'
+                        : '<span class="bg-yellow-100 text-yellow-700 text-xs px-2 py-0.5 rounded-full">⏰ รอประกาศ</span>';
+                    const lineBadge = a.line_sent
+                        ? '<span class="text-xs text-green-500">LINE ✓</span>'
+                        : (a.send_line ? '<span class="text-xs text-slate-400">LINE รอส่ง</span>' : '');
+                    const timeStr = a.published_at
+                        ? new Date(a.published_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' })
+                        : (a.scheduled_at ? '📅 ' + new Date(a.scheduled_at).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '');
+
+                    return `
+                        <div class="p-4 hover:bg-slate-50 transition-colors">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 flex-wrap mb-1">
+                                        ${priorityBadge} ${statusBadge} ${lineBadge}
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 truncate">${a.title}</h4>
+                                    <p class="text-xs text-slate-500 mt-1 line-clamp-2">${a.body}</p>
+                                    <p class="text-xs text-slate-400 mt-2">โดย ${a.created_by} · ${timeStr}</p>
+                                </div>
+                                <div class="flex gap-1 flex-shrink-0">
+                                    ${!a.published ? `<button onclick="app.publishAnnouncement('${a.id}')" class="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors" title="ประกาศเลย"><i data-lucide="send" width="16"></i></button>` : ''}
+                                    <button onclick="app.deleteAnnouncement('${a.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors" title="ลบ"><i data-lucide="trash-2" width="16"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+                lucide.createIcons();
+            },
+
+            publishAnnouncement: async (id) => {
+                if (!confirm('ประกาศตอนนี้เลย?')) return;
+                const now = new Date().toISOString();
+                await db.from('announcements').update({ published: true, published_at: now }).eq('id', id);
+                // Get full data for LINE
+                const { data: ann } = await db.from('announcements').select('*').eq('id', id).single();
+                if (ann && ann.send_line && !ann.line_sent) {
+                    app.sendAnnouncementToLine(ann);
+                }
+                app.loadAnnouncements();
+                showToast('📢 ประกาศสำเร็จ!', ann?.title || '', '✅');
+            },
+
+            deleteAnnouncement: async (id) => {
+                if (!confirm('ยืนยันลบประกาศนี้?')) return;
+                await db.from('announcements').delete().eq('id', id);
+                app.loadAnnouncements();
+            },
+
+            // Announcement Popup for all users
+            _annQueue: [],
+            _annIndex: 0,
+
+            checkNewAnnouncements: async () => {
+                const readIds = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+                const { data } = await db.from('announcements')
+                    .select('*')
+                    .eq('published', true)
+                    .order('published_at', { ascending: false })
+                    .limit(20);
+
+                if (!data) return;
+                const unread = data.filter(a => !readIds.includes(a.id));
+                if (unread.length === 0) return;
+
+                app._annQueue = unread;
+                app._annIndex = 0;
+                app.showAnnouncementPopup();
+            },
+
+            showAnnouncementPopup: () => {
+                const queue = app._annQueue;
+                const idx = app._annIndex;
+                if (idx >= queue.length) {
+                    app.closeAnnouncementPopup();
+                    return;
+                }
+                const a = queue[idx];
+                const isUrgent = a.priority === 'urgent';
+                getEl('ann-popup-icon').textContent = isUrgent ? '🚨' : '📢';
+                getEl('ann-popup-icon').className = `w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${isUrgent ? 'bg-red-100' : 'bg-indigo-100'}`;
+                getEl('ann-popup-title').textContent = a.title;
+                getEl('ann-popup-meta').textContent = `โดย ${a.created_by} · ${new Date(a.published_at).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' })}`;
+                getEl('ann-popup-body').textContent = a.body;
+                getEl('ann-popup-counter').textContent = queue.length > 1 ? `${idx + 1} / ${queue.length}` : '';
+
+                // Show/hide prev button
+                const prevBtn = getEl('ann-popup-prev');
+                if (idx > 0) prevBtn.classList.remove('hidden');
+                else prevBtn.classList.add('hidden');
+
+                // Next button text
+                const nextBtn = getEl('ann-popup-next');
+                nextBtn.textContent = idx < queue.length - 1 ? 'ถัดไป →' : 'รับทราบ ✓';
+
+                show('modal-announcement');
+                lucide.createIcons();
+            },
+
+            nextAnnouncement: () => {
+                // Mark current as read
+                const a = app._annQueue[app._annIndex];
+                const readIds = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+                if (!readIds.includes(a.id)) readIds.push(a.id);
+                localStorage.setItem('read_announcements', JSON.stringify(readIds));
+
+                app._annIndex++;
+                if (app._annIndex >= app._annQueue.length) {
+                    app.closeAnnouncementPopup();
+                } else {
+                    app.showAnnouncementPopup();
+                }
+            },
+
+            prevAnnouncement: () => {
+                if (app._annIndex > 0) {
+                    app._annIndex--;
+                    app.showAnnouncementPopup();
+                }
+            },
+
+            closeAnnouncementPopup: () => {
+                // Mark all remaining as read too
+                const readIds = JSON.parse(localStorage.getItem('read_announcements') || '[]');
+                app._annQueue.forEach(a => {
+                    if (!readIds.includes(a.id)) readIds.push(a.id);
+                });
+                localStorage.setItem('read_announcements', JSON.stringify(readIds));
+                hide('modal-announcement');
             },
 
             // PROJECTS
@@ -3301,6 +4075,7 @@ SKYNET:
         bind('leave-form', 'submit', (e) => { e.preventDefault(); app.submitLeave(); });
         bind('add-meeting-form', 'submit', (e) => { e.preventDefault(); app.saveMeeting(); });
         bind('add-event-form', 'submit', (e) => { e.preventDefault(); app.saveEvent(); });
+        bind('announcement-form', 'submit', (e) => { e.preventDefault(); app.createAnnouncement(); });
         bind('chat-form', 'submit', (e) => {
             e.preventDefault();
             const input = getEl('chat-input');
