@@ -10,7 +10,7 @@
   "crons": [
     {
       "path": "/api/cron/checkin-reminder",
-      "schedule": "0 2 * * 1-5"
+      "schedule": "30 2 * * 1-5"
     },
     {
       "path": "/api/cron/checkout-reminder",
@@ -19,6 +19,14 @@
     {
       "path": "/api/cron/auto-absent",
       "schedule": "0 6 * * 1-5"
+    },
+    {
+      "path": "/api/cron/announcements",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/monthly-summary",
+      "schedule": "0 2 1 * *"
     }
   ]
 }
