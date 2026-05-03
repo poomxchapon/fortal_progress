@@ -5,6 +5,43 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // WFH notification — push to admin only
+  if (req.body.action === 'wfh') {
+    const { user_name, date, note } = req.body;
+    if (!user_name || !date) return res.status(400).json({ error: 'Missing fields' });
+
+    const LINE_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+    const ADMIN_USER_ID = process.env.LINE_ADMIN_USER_ID;
+    if (!LINE_TOKEN || !ADMIN_USER_ID) return res.status(500).json({ error: 'LINE config missing' });
+
+    const dateFmt = new Date(date).toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const flex = {
+      type: 'flex',
+      altText: `🏠 ${user_name} แจ้ง WFH วันนี้`,
+      contents: {
+        type: 'bubble', size: 'kilo',
+        header: { type: 'box', layout: 'vertical', backgroundColor: '#6366F1', paddingAll: '16px', contents: [
+          { type: 'text', text: '🏠 แจ้ง Work from Home', color: '#FFFFFF', weight: 'bold', size: 'md' }
+        ]},
+        body: { type: 'box', layout: 'vertical', paddingAll: '20px', contents: [
+          { type: 'text', text: user_name, size: 'lg', weight: 'bold', color: '#1E293B' },
+          { type: 'text', text: dateFmt, size: 'xs', color: '#64748B', margin: 'sm' },
+          ...(note ? [{ type: 'separator', margin: 'lg' }, { type: 'text', text: `📝 ${note}`, size: 'sm', color: '#475569', margin: 'lg', wrap: true }] : [])
+        ]}
+      }
+    };
+
+    try {
+      const r = await fetch('https://api.line.me/v2/bot/message/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${LINE_TOKEN}` },
+        body: JSON.stringify({ to: ADMIN_USER_ID, messages: [flex] })
+      });
+      if (!r.ok) { const d = await r.json(); return res.status(502).json({ error: d.message }); }
+      return res.status(200).json({ success: true });
+    } catch (err) { return res.status(500).json({ error: err.message }); }
+  }
+
   const { leave_id, user_id, user_name, type, date, reason } = req.body;
   if (!user_name || !type || !date) {
     return res.status(400).json({ error: 'Missing required fields' });
