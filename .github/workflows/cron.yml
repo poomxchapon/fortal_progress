@@ -1,0 +1,54 @@
+name: Cron Jobs
+
+# ทุก schedule ตั้งเร็วกว่าเวลาจริง 30 นาที (ชดเชย GitHub Actions delay 5-15 นาที)
+# Time = UTC. ICT = UTC+7. Logic ใน endpoint จะ skip weekend ให้เอง.
+
+on:
+  schedule:
+    - cron: '0 2 * * 1-5'    # checkin-reminder    — ของจริง 09:30 ICT (ตั้ง 09:00 = 02:00 UTC, Mon-Fri)
+    - cron: '0 11 * * 1-5'   # checkout-reminder   — ของจริง 18:30 ICT (ตั้ง 18:00 = 11:00 UTC, Mon-Fri)
+    - cron: '30 5 * * 1-5'   # auto-absent         — ของจริง 13:00 ICT (ตั้ง 12:30 = 05:30 UTC, Mon-Fri)
+    - cron: '30 0 * * *'     # announcements       — ของจริง 08:00 ICT daily (ตั้ง 07:30 = 00:30 UTC)
+    - cron: '30 1 1 * *'     # monthly-summary     — ของจริง 09:00 ICT วันที่ 1 (ตั้ง 08:30 = 01:30 UTC)
+  workflow_dispatch:
+    inputs:
+      endpoint:
+        description: 'Which endpoint to hit (manual run)'
+        required: true
+        default: 'checkin-reminder'
+        type: choice
+        options:
+          - checkin-reminder
+          - checkout-reminder
+          - auto-absent
+          - announcements
+          - monthly-summary
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pick endpoint based on cron schedule
+        id: pick
+        run: |
+          # Manual run — use input
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "endpoint=${{ inputs.endpoint }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Scheduled run — match cron expression to endpoint
+          case "${{ github.event.schedule }}" in
+            "0 2 * * 1-5")    echo "endpoint=checkin-reminder"   >> $GITHUB_OUTPUT ;;
+            "0 11 * * 1-5")   echo "endpoint=checkout-reminder"  >> $GITHUB_OUTPUT ;;
+            "30 5 * * 1-5")   echo "endpoint=auto-absent"        >> $GITHUB_OUTPUT ;;
+            "30 0 * * *")     echo "endpoint=announcements"      >> $GITHUB_OUTPUT ;;
+            "30 1 1 * *")     echo "endpoint=monthly-summary"    >> $GITHUB_OUTPUT ;;
+            *) echo "Unknown schedule: ${{ github.event.schedule }}"; exit 1 ;;
+          esac
+
+      - name: Hit endpoint
+        run: |
+          URL="https://fortal-progress.vercel.app/api/cron/${{ steps.pick.outputs.endpoint }}"
+          echo "→ POST/GET $URL"
+          curl -sS -f -w "\n[HTTP %{http_code}]\n" "$URL"
